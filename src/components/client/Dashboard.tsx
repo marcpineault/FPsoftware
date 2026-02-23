@@ -31,7 +31,7 @@ function formatDate(date: Date | string | undefined): string {
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { clients, loadClients, deleteClient } = useAppStore();
+  const { clients, loadClients, deleteClient, setCurrentClient } = useAppStore();
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -47,6 +47,7 @@ export function Dashboard() {
       const id = uuidv4();
       const newClient = createDefaultClient(id);
       await db.clients.put(newClient);
+      setCurrentClient(newClient);
       navigate(`/client/${id}/discovery`);
     } catch (err) {
       console.error('Failed to create client:', err);

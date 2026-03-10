@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import { useAppStore } from '../../store';
 import { useClient } from '../../hooks/useClient';
 import {
@@ -282,8 +281,7 @@ function getKeyYears(projections: ProjectionRow[]): ProjectionRow[] {
 // ---------------------------------------------------------------------------
 
 export default function PlanReport() {
-  const { id } = useParams<{ id: string }>();
-  // Ensure client is loaded from DB (handles direct navigation)
+  // Ensure client is loaded from DB (handles direct navigation / useParams internally)
   useClient();
   const { currentClient, practiceSettings } = useAppStore();
 

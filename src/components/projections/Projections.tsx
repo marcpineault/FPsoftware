@@ -77,8 +77,8 @@ function ParamSlider({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <label className="text-sm font-medium text-text-primary">{label}</label>
-        <span className="text-sm font-semibold text-navy tabular-nums min-w-[3.5rem] text-right">
+        <label className="text-sm font-medium text-slate-700">{label}</label>
+        <span className="text-sm font-semibold text-slate-800 tabular-nums min-w-[3.5rem] text-right">
           {formatValue(value)}
         </span>
       </div>
@@ -89,12 +89,12 @@ function ParamSlider({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-1.5 bg-card-border rounded-full appearance-none cursor-pointer
+        className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer
           [&::-webkit-slider-thumb]:appearance-none
           [&::-webkit-slider-thumb]:w-4
           [&::-webkit-slider-thumb]:h-4
           [&::-webkit-slider-thumb]:rounded-full
-          [&::-webkit-slider-thumb]:bg-accent
+          [&::-webkit-slider-thumb]:bg-amber-500
           [&::-webkit-slider-thumb]:shadow-sm
           [&::-webkit-slider-thumb]:cursor-pointer
           [&::-webkit-slider-thumb]:transition-transform
@@ -102,13 +102,13 @@ function ParamSlider({
           [&::-moz-range-thumb]:w-4
           [&::-moz-range-thumb]:h-4
           [&::-moz-range-thumb]:rounded-full
-          [&::-moz-range-thumb]:bg-accent
+          [&::-moz-range-thumb]:bg-amber-500
           [&::-moz-range-thumb]:border-0
           [&::-moz-range-thumb]:shadow-sm
           [&::-moz-range-thumb]:cursor-pointer
           focus:outline-none focus:ring-0"
       />
-      <div className="flex justify-between text-[10px] text-text-secondary tabular-nums">
+      <div className="flex justify-between text-[10px] text-slate-400 tabular-nums">
         <span>{formatValue(min)}</span>
         <span>{formatValue(max)}</span>
       </div>
@@ -163,8 +163,8 @@ function CustomTooltip({
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className="bg-white border border-card-border rounded-lg shadow-lg p-3 text-sm max-w-xs">
-      <p className="font-semibold text-text-primary mb-2">Age {label}</p>
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-sm max-w-xs">
+      <p className="font-semibold text-slate-800 mb-2">Age {label}</p>
       <div className="space-y-1">
         {payload.map((item: ChartPayloadItem) => (
           <div key={item.dataKey} className="flex items-center justify-between gap-4">
@@ -173,9 +173,9 @@ function CustomTooltip({
                 className="w-2.5 h-2.5 rounded-sm shrink-0"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-text-secondary">{item.name}</span>
+              <span className="text-slate-500">{item.name}</span>
             </div>
-            <span className="font-medium tabular-nums text-text-primary">
+            <span className="font-medium tabular-nums text-slate-800">
               {formatCurrencyFull(item.value)}
             </span>
           </div>
@@ -386,10 +386,10 @@ export function Projections() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <p className="text-text-secondary text-sm">No client loaded.</p>
+          <p className="text-slate-500 text-sm">No client loaded.</p>
           <button
             onClick={() => navigate('/')}
-            className="mt-3 text-sm text-accent hover:text-accent-hover underline"
+            className="mt-3 text-sm text-amber-600 hover:text-amber-600-hover underline"
           >
             Return to dashboard
           </button>
@@ -428,10 +428,10 @@ export function Projections() {
     <div className="space-y-6 p-6">
       {/* Page header */}
       <div>
-        <h1 className="font-serif text-2xl text-text-primary tracking-wide">
+        <h1 className="text-xl font-semibold text-slate-800">
           Financial Projections
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-sm text-slate-500">
           Adjust the sliders below to see how different retirement ages, returns, and spending levels affect the plan.
         </p>
       </div>
@@ -442,8 +442,8 @@ export function Projections() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-children">
         {/* Income Replacement Ratio */}
-        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
-          <p className="text-sm font-medium text-text-secondary">
+        <div className="metric-card bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <p className="text-sm font-medium text-slate-500">
             Income Replacement
           </p>
           <p
@@ -457,7 +457,7 @@ export function Projections() {
           >
             {formatPercent(metrics.incomeReplacementRatio)}
           </p>
-          <p className="mt-1 text-xs text-text-secondary">
+          <p className="mt-1 text-xs text-slate-500">
             {replacementColor === 'positive'
               ? 'On track'
               : replacementColor === 'warning'
@@ -467,8 +467,8 @@ export function Projections() {
         </div>
 
         {/* Money Lasts Until Age */}
-        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
-          <p className="text-sm font-medium text-text-secondary">
+        <div className="metric-card bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <p className="text-sm font-medium text-slate-500">
             Money Lasts Until
           </p>
           <p
@@ -482,7 +482,7 @@ export function Projections() {
           >
             {moneyLastsLabel}
           </p>
-          <p className="mt-1 text-xs text-text-secondary">
+          <p className="mt-1 text-xs text-slate-500">
             {metrics.moneyLastsUntilAge === null
               ? `${formatCurrency(metrics.surplusAtAge95 ?? 0)} surplus at 95`
               : `Funds depleted at age ${metrics.moneyLastsUntilAge}`}
@@ -490,14 +490,14 @@ export function Projections() {
         </div>
 
         {/* Lifetime Tax */}
-        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
-          <p className="text-sm font-medium text-text-secondary">
+        <div className="metric-card bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <p className="text-sm font-medium text-slate-500">
             Lifetime Tax
           </p>
-          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-text-primary">
+          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-slate-800">
             {formatCurrency(metrics.totalLifetimeTax)}
           </p>
-          <p className="mt-1 text-xs text-text-secondary">
+          <p className="mt-1 text-xs text-slate-500">
             Avg {formatPercent(metrics.avgEffectiveTaxRate ?? 0)} effective rate
           </p>
         </div>
@@ -507,10 +507,10 @@ export function Projections() {
       {/*  ADJUSTABLE PARAMETERS                                    */}
       {/* -------------------------------------------------------- */}
 
-      <div className="bg-white rounded-lg border border-card-border shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <button
           onClick={() => setParamsExpanded((prev) => !prev)}
-          className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-bg-secondary/50 transition-colors"
+          className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50/50 transition-colors"
         >
           <div className="flex items-center gap-2">
             <svg
@@ -518,7 +518,7 @@ export function Projections() {
               height="18"
               viewBox="0 0 18 18"
               fill="none"
-              className="text-text-secondary"
+              className="text-slate-500"
             >
               <path
                 d="M7.5 3L7.5 15M10.5 3L10.5 15M3 7.5L15 7.5M3 10.5L15 10.5"
@@ -527,10 +527,10 @@ export function Projections() {
                 strokeLinecap="round"
               />
             </svg>
-            <span className="text-sm font-semibold text-text-primary">
+            <span className="text-sm font-semibold text-slate-800">
               Projection Parameters
             </span>
-            <span className="text-xs text-text-secondary font-normal">
+            <span className="text-xs text-slate-500 font-normal">
               -- Adjust assumptions to explore scenarios
             </span>
           </div>
@@ -538,7 +538,7 @@ export function Projections() {
         </button>
 
         {paramsExpanded && (
-          <div className="px-5 pb-5 border-t border-card-border pt-4">
+          <div className="px-5 pb-5 border-t border-gray-200 pt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
               <ParamSlider
                 label="Retirement Age"
@@ -601,30 +601,30 @@ export function Projections() {
               />
             </div>
             {/* Strategy toggles */}
-            <div className="mt-4 pt-4 border-t border-card-border/60 flex flex-wrap gap-x-6 gap-y-2">
-              <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
+            <div className="mt-4 pt-4 border-t border-gray-200/60 flex flex-wrap gap-x-6 gap-y-2">
+              <label className="flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={localParams.enablePensionSplitting}
                   onChange={(e) => handleParamChange('enablePensionSplitting', e.target.checked)}
-                  className="rounded border-card-border text-accent focus:ring-accent/20"
+                  className="rounded border-gray-200 text-amber-600 focus:ring-accent/20"
                 />
                 Pension Splitting
               </label>
-              <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={localParams.earlyRrifConversion ?? false}
                   onChange={(e) => handleParamChange('earlyRrifConversion', e.target.checked)}
-                  className="rounded border-card-border text-accent focus:ring-accent/20"
+                  className="rounded border-gray-200 text-amber-600 focus:ring-accent/20"
                 />
                 Early RRIF at 65
-                <span className="text-xs text-text-tertiary">(enables splitting)</span>
+                <span className="text-xs text-slate-400">(enables splitting)</span>
               </label>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-card-border/60">
-              <p className="text-xs text-text-tertiary tracking-wider uppercase mb-3">Contributions & Expenses</p>
+            <div className="mt-4 pt-4 border-t border-gray-200/60">
+              <p className="text-xs text-slate-400 tracking-wider uppercase mb-3">Contributions & Expenses</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
                 <ParamSlider
                   label="RRSP Annual Contribution"
@@ -664,13 +664,13 @@ export function Projections() {
       {/* -------------------------------------------------------- */}
 
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center bg-white border border-card-border rounded-lg p-0.5">
+        <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5">
           <button
             onClick={() => setView('table')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
               view === 'table'
                 ? 'bg-navy text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -689,7 +689,7 @@ export function Projections() {
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
               view === 'chart'
                 ? 'bg-navy text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -704,7 +704,7 @@ export function Projections() {
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
               view === 'balances'
                 ? 'bg-navy text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -720,7 +720,7 @@ export function Projections() {
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
               view === 'income'
                 ? 'bg-navy text-white shadow-sm'
-                : 'text-text-secondary hover:text-text-primary'
+                : 'text-slate-500 hover:text-slate-800'
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -734,7 +734,7 @@ export function Projections() {
           </button>
         </div>
 
-        <p className="text-xs text-text-secondary">
+        <p className="text-xs text-slate-500">
           Showing ages {projections[0]?.age ?? '--'} to{' '}
           {projections[projections.length - 1]?.age ?? '--'} ({projections.length} years)
         </p>
@@ -745,7 +745,7 @@ export function Projections() {
       {/* -------------------------------------------------------- */}
 
       {view === 'table' && (
-        <div className="bg-white rounded-lg border border-card-border shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -772,13 +772,13 @@ export function Projections() {
                   } else if (isEven) {
                     rowBg = 'bg-white';
                   } else {
-                    rowBg = 'bg-bg-secondary/50';
+                    rowBg = 'bg-gray-50/50';
                   }
 
                   return (
                     <tr
                       key={row.year}
-                      className={`${rowBg} hover:bg-blue-50/50 transition-colors border-b border-card-border/50 last:border-b-0`}
+                      className={`${rowBg} hover:bg-blue-50/50 transition-colors border-b border-gray-200/50 last:border-b-0`}
                     >
                       {TABLE_COLUMNS.map((col) => {
                         const val = row[col.key] as number;
@@ -800,7 +800,7 @@ export function Projections() {
                           <td
                             key={col.key}
                             className={`px-3 py-2.5 tabular-nums whitespace-nowrap text-sm ${
-                              isNegative ? 'text-negative font-medium' : 'text-text-primary'
+                              isNegative ? 'text-negative font-medium' : 'text-slate-800'
                             } ${
                               col.key === 'totalIncome' || col.key === 'netCashFlow' || col.key === 'netWorth'
                                 ? 'font-medium'
@@ -824,7 +824,7 @@ export function Projections() {
           </div>
 
           {projections.length === 0 && (
-            <div className="flex items-center justify-center py-16 text-text-secondary text-sm">
+            <div className="flex items-center justify-center py-16 text-slate-500 text-sm">
               No projection data available. Please complete the client profile first.
             </div>
           )}
@@ -836,11 +836,11 @@ export function Projections() {
       {/* -------------------------------------------------------- */}
 
       {view === 'chart' && (
-        <div className="bg-white rounded-lg border border-card-border shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-text-primary mb-1">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-slate-800 mb-1">
             Income Sources vs. Expenses Over Time
           </h3>
-          <p className="text-xs text-text-secondary mb-6">
+          <p className="text-xs text-slate-500 mb-6">
             Stacked income sources with expense overlay. Hover for details.
           </p>
 
@@ -951,7 +951,7 @@ export function Projections() {
               </ComposedChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center py-24 text-text-secondary text-sm">
+            <div className="flex items-center justify-center py-24 text-slate-500 text-sm">
               No projection data available. Please complete the client profile first.
             </div>
           )}
@@ -963,11 +963,11 @@ export function Projections() {
       {/* -------------------------------------------------------- */}
 
       {view === 'balances' && (
-        <div className="bg-white rounded-lg border border-card-border shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-text-primary mb-1">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-slate-800 mb-1">
             Investment Balances &amp; Net Worth Over Time
           </h3>
-          <p className="text-xs text-text-secondary mb-6">
+          <p className="text-xs text-slate-500 mb-6">
             Stacked account balances with net worth overlay. Hover for details.
           </p>
 
@@ -1048,7 +1048,7 @@ export function Projections() {
               </ComposedChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center py-24 text-text-secondary text-sm">
+            <div className="flex items-center justify-center py-24 text-slate-500 text-sm">
               No projection data available. Please complete the client profile first.
             </div>
           )}
@@ -1060,11 +1060,11 @@ export function Projections() {
       {/* -------------------------------------------------------- */}
 
       {view === 'income' && (
-        <div className="bg-white rounded-lg border border-card-border shadow-sm p-6">
-          <h3 className="text-sm font-semibold text-text-primary mb-1">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-slate-800 mb-1">
             Retirement Income Sources by Age
           </h3>
-          <p className="text-xs text-text-secondary mb-6">
+          <p className="text-xs text-slate-500 mb-6">
             Stacked income sources with after-tax income and expense overlay. Shows retirement years only.
           </p>
 
@@ -1140,7 +1140,7 @@ export function Projections() {
               </ComposedChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center py-24 text-text-secondary text-sm">
+            <div className="flex items-center justify-center py-24 text-slate-500 text-sm">
               No retirement projection data available. Complete profile and set a retirement age.
             </div>
           )}

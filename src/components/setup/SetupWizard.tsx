@@ -67,13 +67,13 @@ function FieldRow({ children, cols = 2 }: { children: React.ReactNode; cols?: nu
 
 function FormCard({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden ring-1 ring-gray-100">
       {title && (
-        <div className="px-6 py-3.5 bg-gray-50 border-b border-gray-200">
-          <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
+        <div className="px-6 py-3 bg-gradient-to-r from-slate-800 to-slate-700 border-b border-gray-200">
+          <h3 className="text-[13px] font-medium text-white/90 uppercase tracking-wider">{title}</h3>
         </div>
       )}
-      <div className="px-6 py-5 space-y-4">
+      <div className="px-6 py-5 space-y-5">
         {children}
       </div>
     </div>
@@ -178,9 +178,9 @@ export default function SetupWizard() {
   const c = currentClient;
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="flex h-full bg-gray-100/80">
       {/* Step sidebar */}
-      <aside className="w-60 shrink-0 bg-white border-r border-gray-200 py-5 overflow-y-auto hidden md:flex flex-col">
+      <aside className="w-60 shrink-0 bg-white border-r border-gray-200 py-5 overflow-y-auto hidden md:flex flex-col shadow-sm">
         <div className="px-5 mb-4">
           <p className="text-[10px] uppercase tracking-[0.15em] text-slate-400 font-semibold">Setup Steps</p>
         </div>

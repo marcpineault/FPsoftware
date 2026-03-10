@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAppStore } from '../../store';
 import { useClient } from '../../hooks/useClient';
 import {
@@ -283,7 +283,6 @@ function getKeyYears(projections: ProjectionRow[]): ProjectionRow[] {
 
 export default function PlanReport() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   // Ensure client is loaded from DB (handles direct navigation)
   useClient();
   const { currentClient, practiceSettings } = useAppStore();
@@ -315,16 +314,10 @@ export default function PlanReport() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 print:px-0 print:py-0 print:max-w-none">
       {/* Print button (no-print) */}
-      <div className="no-print mb-6 flex items-center justify-between">
-        <button
-          onClick={() => navigate(`/client/${id}/summary`)}
-          className="text-sm text-accent hover:text-accent-hover"
-        >
-          &larr; Back to Summary
-        </button>
+      <div className="no-print mb-6 flex items-center justify-end">
         <button
           onClick={() => window.print()}
-          className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-accent-hover"
+          className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-400 transition-colors"
         >
           Print Report
         </button>

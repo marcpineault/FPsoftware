@@ -19,42 +19,34 @@ import { Toggle } from '../shared/Toggle';
 // ---------------------------------------------------------------------------
 
 const STEPS = [
-  { id: 'client', label: 'Client' },
-  { id: 'income', label: 'Income & Employment' },
+  { id: 'client', label: 'Client Info' },
+  { id: 'income', label: 'Income' },
   { id: 'expenses', label: 'Expenses' },
   { id: 'assets', label: 'Assets' },
-  { id: 'debts', label: 'Debts & Property' },
-  { id: 'benefits', label: "Gov't Benefits" },
+  { id: 'debts', label: 'Debts' },
+  { id: 'benefits', label: "Benefits" },
   { id: 'insurance', label: 'Insurance' },
 ] as const;
 
 type StepId = (typeof STEPS)[number]['id'];
 
-// Province options for select
-const PROVINCE_OPTIONS = Object.entries(PROVINCE_NAMES).map(([value, label]) => ({
-  value,
-  label,
-}));
-
+const PROVINCE_OPTIONS = Object.entries(PROVINCE_NAMES).map(([value, label]) => ({ value, label }));
 const EMPLOYMENT_OPTIONS = [
   { value: 'employed', label: 'Employed' },
   { value: 'self-employed', label: 'Self-Employed' },
   { value: 'retired', label: 'Retired' },
   { value: 'other', label: 'Other' },
 ];
-
 const PENSION_OPTIONS = [
   { value: 'none', label: 'No Pension' },
   { value: 'db', label: 'Defined Benefit' },
   { value: 'dc', label: 'Defined Contribution' },
 ];
-
 const INSURANCE_TYPE_OPTIONS = [
   { value: 'term', label: 'Term' },
   { value: 'whole', label: 'Whole Life' },
   { value: 'universal', label: 'Universal Life' },
 ];
-
 const INSURANCE_SOURCE_OPTIONS = [
   { value: 'employer', label: 'Employer' },
   { value: 'personal', label: 'Personal' },
@@ -62,7 +54,7 @@ const INSURANCE_SOURCE_OPTIONS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Field helper
+// Layout helpers
 // ---------------------------------------------------------------------------
 
 function FieldRow({ children, cols = 2 }: { children: React.ReactNode; cols?: number }) {
@@ -73,12 +65,27 @@ function FieldRow({ children, cols = 2 }: { children: React.ReactNode; cols?: nu
   );
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-sm font-semibold text-text-primary mt-6 mb-3 first:mt-0">{children}</h3>;
+function FormCard({ title, children }: { title?: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      {title && (
+        <div className="px-6 py-3.5 bg-gray-50 border-b border-gray-200">
+          <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
+        </div>
+      )}
+      <div className="px-6 py-5 space-y-4">
+        {children}
+      </div>
+    </div>
+  );
 }
 
-function SectionDivider() {
-  return <hr className="my-6 border-gray-200" />;
+function InfoBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-800">
+      {children}
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -93,7 +100,6 @@ export default function SetupWizard() {
   const step: StepId = (rawStep as StepId) || 'client';
   const currentStepIndex = STEPS.findIndex((s) => s.id === step);
 
-  // Auto-save field change
   const handleField = useCallback(
     (field: keyof Client, value: Client[keyof Client]) => {
       if (!currentClient) return;
@@ -102,18 +108,14 @@ export default function SetupWizard() {
     [currentClient, updateClient],
   );
 
-  // Nested field change for projectionParams
   const handleParam = useCallback(
     (field: string, value: number | boolean) => {
       if (!currentClient) return;
-      updateClient({
-        projectionParams: { ...currentClient.projectionParams, [field]: value },
-      });
+      updateClient({ projectionParams: { ...currentClient.projectionParams, [field]: value } });
     },
     [currentClient, updateClient],
   );
 
-  // Spouse field change
   const handleSpouseField = useCallback(
     (field: string, value: string | number) => {
       if (!currentClient) return;
@@ -129,7 +131,6 @@ export default function SetupWizard() {
     [currentClient, updateClient],
   );
 
-  // Insurance details change
   const handleInsuranceDetail = useCallback(
     (field: string, value: string | number) => {
       if (!currentClient) return;
@@ -141,7 +142,6 @@ export default function SetupWizard() {
     [currentClient, updateClient],
   );
 
-  // Pension details change
   const handlePensionDetail = useCallback(
     (field: string, value: number) => {
       if (!currentClient) return;
@@ -157,7 +157,6 @@ export default function SetupWizard() {
     if (currentStepIndex < STEPS.length - 1) {
       navigate(`/client/${id}/setup/${STEPS[currentStepIndex + 1].id}`);
     } else {
-      // After last setup step, go to projections
       navigate(`/client/${id}/projections`);
     }
   };
@@ -170,8 +169,8 @@ export default function SetupWizard() {
 
   if (!currentClient) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      <div className="flex items-center justify-center h-full bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
       </div>
     );
   }
@@ -179,13 +178,13 @@ export default function SetupWizard() {
   const c = currentClient;
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full bg-gray-50">
       {/* Step sidebar */}
-      <aside className="w-56 shrink-0 bg-white border-r border-gray-200 py-4 overflow-y-auto hidden md:block">
-        <div className="px-3 mb-2">
-          <p className="text-[10px] uppercase tracking-widest text-text-tertiary font-medium px-3">Setup Steps</p>
+      <aside className="w-60 shrink-0 bg-white border-r border-gray-200 py-5 overflow-y-auto hidden md:flex flex-col">
+        <div className="px-5 mb-4">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-slate-400 font-semibold">Setup Steps</p>
         </div>
-        <nav className="space-y-0.5 px-3">
+        <nav className="flex-1 space-y-0.5 px-3">
           {STEPS.map((s, i) => {
             const active = s.id === step;
             const visited = i < currentStepIndex;
@@ -194,29 +193,29 @@ export default function SetupWizard() {
                 key={s.id}
                 to={`/client/${id}/setup/${s.id}`}
                 className={`
-                  flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all
+                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-all
                   ${active
-                    ? 'bg-accent/10 text-accent font-medium'
+                    ? 'bg-amber-50 text-amber-700 font-semibold shadow-sm border border-amber-200'
                     : visited
-                    ? 'text-text-secondary hover:bg-gray-50'
-                    : 'text-text-tertiary hover:bg-gray-50 hover:text-text-secondary'
+                    ? 'text-slate-600 hover:bg-gray-50 font-medium'
+                    : 'text-slate-400 hover:bg-gray-50 hover:text-slate-500'
                   }
                 `}
               >
                 <span
                   className={`
-                    flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0
+                    flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 transition-all
                     ${active
-                      ? 'bg-accent text-white'
+                      ? 'bg-amber-500 text-white shadow-sm'
                       : visited
-                      ? 'bg-positive/20 text-positive'
-                      : 'bg-gray-100 text-text-tertiary'
+                      ? 'bg-emerald-100 text-emerald-600'
+                      : 'bg-gray-100 text-slate-400'
                     }
                   `}
                 >
                   {visited && !active ? (
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
                     i + 1
@@ -227,471 +226,241 @@ export default function SetupWizard() {
             );
           })}
         </nav>
+
+        {/* Sidebar footer */}
+        <div className="px-5 pt-4 mt-auto border-t border-gray-100">
+          <p className="text-[11px] text-slate-400">
+            Step {currentStepIndex + 1} of {STEPS.length}
+          </p>
+          <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-amber-400 rounded-full transition-all duration-300"
+              style={{ width: `${((currentStepIndex + 1) / STEPS.length) * 100}%` }}
+            />
+          </div>
+        </div>
       </aside>
 
       {/* Step content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile step indicator */}
-        <div className="md:hidden px-4 py-3 bg-white border-b border-gray-200 flex items-center gap-2">
-          <span className="text-xs text-text-tertiary">Step {currentStepIndex + 1} of {STEPS.length}:</span>
-          <span className="text-sm font-medium text-text-primary">{STEPS[currentStepIndex].label}</span>
+        <div className="md:hidden px-4 py-3 bg-white border-b border-gray-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">{currentStepIndex + 1}</span>
+            <span className="text-sm font-semibold text-slate-700">{STEPS[currentStepIndex].label}</span>
+          </div>
+          <span className="text-xs text-slate-400">{currentStepIndex + 1}/{STEPS.length}</span>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-6 py-8">
-            {/* Step title */}
-            <h2 className="text-xl font-semibold text-text-primary mb-1">
-              {STEPS[currentStepIndex].label}
-            </h2>
-            <p className="text-sm text-text-tertiary mb-6">
-              {step === 'client' && 'Basic client information.'}
-              {step === 'income' && 'Employment and income details.'}
-              {step === 'expenses' && 'Monthly and annual expenses.'}
-              {step === 'assets' && 'Registered and non-registered accounts.'}
-              {step === 'debts' && 'Mortgage, property, and other debts.'}
-              {step === 'benefits' && 'CPP, OAS, and pension information.'}
-              {step === 'insurance' && 'Life, disability, and critical illness coverage.'}
-            </p>
+          <div className="max-w-2xl mx-auto px-6 py-8 space-y-5">
+            {/* Step header */}
+            <div className="mb-2">
+              <h2 className="text-2xl font-bold text-slate-800">
+                {STEPS[currentStepIndex].label}
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                {step === 'client' && 'Basic client information.'}
+                {step === 'income' && 'Employment and income details.'}
+                {step === 'expenses' && 'Monthly and annual expenses.'}
+                {step === 'assets' && 'Registered and non-registered accounts.'}
+                {step === 'debts' && 'Mortgage, property, and other debts.'}
+                {step === 'benefits' && 'CPP, OAS, and pension information.'}
+                {step === 'insurance' && 'Life, disability, and critical illness coverage.'}
+              </p>
+            </div>
 
             {/* Step forms */}
-            <div className="space-y-4">
-              {step === 'client' && (
-                <>
-                  <FieldRow>
-                    <Input
-                      label="First Name"
-                      value={c.firstName}
-                      onChange={(e) => handleField('firstName', e.target.value)}
-                      placeholder="John"
-                    />
-                    <Input
-                      label="Last Name"
-                      value={c.lastName}
-                      onChange={(e) => handleField('lastName', e.target.value)}
-                      placeholder="Smith"
-                    />
-                  </FieldRow>
-                  <FieldRow>
-                    <Input
-                      label="Date of Birth"
-                      type="date"
-                      value={c.dateOfBirth}
-                      onChange={(e) => handleField('dateOfBirth', e.target.value)}
-                    />
-                    <Select
-                      label="Province"
-                      value={c.province}
-                      onChange={(e) => handleField('province', e.target.value as CanadianProvince)}
-                      options={PROVINCE_OPTIONS}
-                    />
-                  </FieldRow>
-                </>
-              )}
+            {step === 'client' && (
+              <FormCard>
+                <FieldRow>
+                  <Input label="First Name" value={c.firstName} onChange={(e) => handleField('firstName', e.target.value)} placeholder="John" />
+                  <Input label="Last Name" value={c.lastName} onChange={(e) => handleField('lastName', e.target.value)} placeholder="Smith" />
+                </FieldRow>
+                <FieldRow>
+                  <Input label="Date of Birth" type="date" value={c.dateOfBirth} onChange={(e) => handleField('dateOfBirth', e.target.value)} />
+                  <Select label="Province" value={c.province} onChange={(e) => handleField('province', e.target.value as CanadianProvince)} options={PROVINCE_OPTIONS} />
+                </FieldRow>
+              </FormCard>
+            )}
 
-              {step === 'income' && (
-                <>
+            {step === 'income' && (
+              <>
+                <FormCard title="Employment">
                   <FieldRow>
-                    <Select
-                      label="Employment Status"
-                      value={c.employmentStatus}
-                      onChange={(e) => handleField('employmentStatus', e.target.value as EmploymentStatus)}
-                      options={EMPLOYMENT_OPTIONS}
-                    />
-                    <CurrencyInput
-                      label="Annual Income"
-                      value={c.annualIncome}
-                      onValueChange={(v) => handleField('annualIncome', v)}
-                    />
+                    <Select label="Employment Status" value={c.employmentStatus} onChange={(e) => handleField('employmentStatus', e.target.value as EmploymentStatus)} options={EMPLOYMENT_OPTIONS} />
+                    <CurrencyInput label="Annual Income" value={c.annualIncome} onValueChange={(v) => handleField('annualIncome', v)} />
                   </FieldRow>
-                  <FieldRow>
-                    <Input
-                      label="Target Retirement Age"
-                      type="number"
-                      min={50}
-                      max={75}
-                      value={c.targetRetirementAge || ''}
-                      onChange={(e) => handleField('targetRetirementAge', parseInt(e.target.value) || 65)}
-                    />
+                  <FieldRow cols={1}>
+                    <Input label="Target Retirement Age" type="number" min={50} max={75} value={c.targetRetirementAge || ''} onChange={(e) => handleField('targetRetirementAge', parseInt(e.target.value) || 65)} />
                   </FieldRow>
+                </FormCard>
 
-                  <SectionDivider />
-
-                  <Toggle
-                    label="Has Spouse / Partner"
-                    checked={c.hasSpouse}
-                    onChange={(v) => handleField('hasSpouse', v)}
-                  />
-
+                <FormCard title="Spouse / Partner">
+                  <Toggle label="Has Spouse / Partner" checked={c.hasSpouse} onChange={(v) => handleField('hasSpouse', v)} />
                   {c.hasSpouse && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
-                      <SectionTitle>Spouse Details</SectionTitle>
+                    <div className="mt-3 pt-4 border-t border-gray-100 space-y-4">
                       <FieldRow>
-                        <Input
-                          label="First Name"
-                          value={c.spouse?.firstName || ''}
-                          onChange={(e) => handleSpouseField('firstName', e.target.value)}
-                        />
-                        <Input
-                          label="Last Name"
-                          value={c.spouse?.lastName || ''}
-                          onChange={(e) => handleSpouseField('lastName', e.target.value)}
-                        />
+                        <Input label="Spouse First Name" value={c.spouse?.firstName || ''} onChange={(e) => handleSpouseField('firstName', e.target.value)} />
+                        <Input label="Spouse Last Name" value={c.spouse?.lastName || ''} onChange={(e) => handleSpouseField('lastName', e.target.value)} />
                       </FieldRow>
                       <FieldRow>
-                        <Input
-                          label="Date of Birth"
-                          type="date"
-                          value={c.spouse?.dateOfBirth || ''}
-                          onChange={(e) => handleSpouseField('dateOfBirth', e.target.value)}
-                        />
-                        <CurrencyInput
-                          label="Annual Income"
-                          value={c.spouse?.annualIncome || 0}
-                          onValueChange={(v) => handleSpouseField('annualIncome', v)}
-                        />
+                        <Input label="Date of Birth" type="date" value={c.spouse?.dateOfBirth || ''} onChange={(e) => handleSpouseField('dateOfBirth', e.target.value)} />
+                        <CurrencyInput label="Annual Income" value={c.spouse?.annualIncome || 0} onValueChange={(v) => handleSpouseField('annualIncome', v)} />
                       </FieldRow>
-                      <FieldRow>
-                        <Input
-                          label="Retirement Age"
-                          type="number"
-                          min={50}
-                          max={75}
-                          value={c.spouse?.targetRetirementAge || 65}
-                          onChange={(e) => handleSpouseField('targetRetirementAge', parseInt(e.target.value) || 65)}
-                        />
+                      <FieldRow cols={1}>
+                        <Input label="Retirement Age" type="number" min={50} max={75} value={c.spouse?.targetRetirementAge || 65} onChange={(e) => handleSpouseField('targetRetirementAge', parseInt(e.target.value) || 65)} />
                       </FieldRow>
                     </div>
                   )}
-                </>
-              )}
+                </FormCard>
+              </>
+            )}
 
-              {step === 'expenses' && (
-                <>
+            {step === 'expenses' && (
+              <>
+                <FormCard title="Living Expenses">
                   <CurrencyInput
                     label="Monthly Living Expenses"
                     value={c.monthlyExpenses}
                     onValueChange={(v) => handleField('monthlyExpenses', v)}
                     hint="Total monthly spending including housing, food, utilities, transportation, etc."
                   />
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                      <strong>Annual expenses:</strong>{' '}
-                      <span className="tabular-nums">
-                        {(c.monthlyExpenses * 12).toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })}
-                      </span>
-                    </p>
-                    <p className="text-xs text-blue-600 mt-1">
-                      In retirement, expenses are assumed at{' '}
-                      {Math.round(c.projectionParams.retirementSpendingRate * 100)}% of pre-retirement.
-                    </p>
-                  </div>
-                </>
-              )}
+                </FormCard>
+                <InfoBox>
+                  <p><strong>Annual expenses:</strong>{' '}
+                    <span className="tabular-nums font-semibold">
+                      {(c.monthlyExpenses * 12).toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })}
+                    </span>
+                  </p>
+                  <p className="text-blue-600 mt-1 text-xs">
+                    In retirement, expenses assumed at {Math.round(c.projectionParams.retirementSpendingRate * 100)}% of pre-retirement.
+                  </p>
+                </InfoBox>
+              </>
+            )}
 
-              {step === 'assets' && (
-                <>
-                  <SectionTitle>RRSP / RRIF</SectionTitle>
+            {step === 'assets' && (
+              <>
+                <FormCard title="RRSP / RRIF">
                   <FieldRow>
-                    <CurrencyInput
-                      label="RRSP Balance"
-                      value={c.rrspBalance}
-                      onValueChange={(v) => handleField('rrspBalance', v)}
-                    />
-                    <CurrencyInput
-                      label="Annual Contribution"
-                      value={c.rrspAnnualContribution}
-                      onValueChange={(v) => handleField('rrspAnnualContribution', v)}
-                    />
+                    <CurrencyInput label="RRSP Balance" value={c.rrspBalance} onValueChange={(v) => handleField('rrspBalance', v)} />
+                    <CurrencyInput label="Annual Contribution" value={c.rrspAnnualContribution} onValueChange={(v) => handleField('rrspAnnualContribution', v)} />
                   </FieldRow>
-
-                  <SectionDivider />
-
-                  <SectionTitle>TFSA</SectionTitle>
+                </FormCard>
+                <FormCard title="TFSA">
                   <FieldRow>
-                    <CurrencyInput
-                      label="TFSA Balance"
-                      value={c.tfsaBalance}
-                      onValueChange={(v) => handleField('tfsaBalance', v)}
-                    />
-                    <CurrencyInput
-                      label="Annual Contribution"
-                      value={c.tfsaAnnualContribution}
-                      onValueChange={(v) => handleField('tfsaAnnualContribution', v)}
-                    />
+                    <CurrencyInput label="TFSA Balance" value={c.tfsaBalance} onValueChange={(v) => handleField('tfsaBalance', v)} />
+                    <CurrencyInput label="Annual Contribution" value={c.tfsaAnnualContribution} onValueChange={(v) => handleField('tfsaAnnualContribution', v)} />
                   </FieldRow>
-
-                  <SectionDivider />
-
-                  <SectionTitle>Non-Registered</SectionTitle>
-                  <FieldRow cols={1}>
-                    <CurrencyInput
-                      label="Non-Registered Investments"
-                      value={c.nonRegisteredInvestments}
-                      onValueChange={(v) => handleField('nonRegisteredInvestments', v)}
-                    />
-                  </FieldRow>
-
-                  <SectionDivider />
-
-                  <SectionTitle>FHSA</SectionTitle>
+                </FormCard>
+                <FormCard title="Non-Registered">
+                  <CurrencyInput label="Non-Registered Investments" value={c.nonRegisteredInvestments} onValueChange={(v) => handleField('nonRegisteredInvestments', v)} />
+                </FormCard>
+                <FormCard title="FHSA">
                   <FieldRow>
-                    <CurrencyInput
-                      label="FHSA Balance"
-                      value={c.fhsaBalance}
-                      onValueChange={(v) => handleField('fhsaBalance', v)}
-                    />
-                    <CurrencyInput
-                      label="Annual Contribution"
-                      value={c.fhsaAnnualContribution}
-                      onValueChange={(v) => handleField('fhsaAnnualContribution', v)}
-                    />
+                    <CurrencyInput label="FHSA Balance" value={c.fhsaBalance} onValueChange={(v) => handleField('fhsaBalance', v)} />
+                    <CurrencyInput label="Annual Contribution" value={c.fhsaAnnualContribution} onValueChange={(v) => handleField('fhsaAnnualContribution', v)} />
                   </FieldRow>
+                </FormCard>
+                {c.hasSpouse && (
+                  <FormCard title="Spouse Accounts">
+                    <FieldRow>
+                      <CurrencyInput label="Spouse RRSP Balance" value={c.spouse?.rrspBalance || 0} onValueChange={(v) => handleSpouseField('rrspBalance', v)} />
+                      <CurrencyInput label="Spousal RRSP" value={c.spouse?.spousalRrspBalance || 0} onValueChange={(v) => handleSpouseField('spousalRrspBalance', v)} hint="Contributed by client, owned by spouse" />
+                    </FieldRow>
+                    <CurrencyInput label="Spouse TFSA Balance" value={c.spouse?.tfsaBalance || 0} onValueChange={(v) => handleSpouseField('tfsaBalance', v)} />
+                  </FormCard>
+                )}
+              </>
+            )}
 
-                  {c.hasSpouse && (
-                    <>
-                      <SectionDivider />
-                      <SectionTitle>Spouse Accounts</SectionTitle>
-                      <FieldRow>
-                        <CurrencyInput
-                          label="Spouse RRSP Balance"
-                          value={c.spouse?.rrspBalance || 0}
-                          onValueChange={(v) => handleSpouseField('rrspBalance', v)}
-                        />
-                        <CurrencyInput
-                          label="Spousal RRSP Balance"
-                          value={c.spouse?.spousalRrspBalance || 0}
-                          onValueChange={(v) => handleSpouseField('spousalRrspBalance', v)}
-                          hint="Contributed by client, owned by spouse"
-                        />
-                      </FieldRow>
-                      <FieldRow cols={1}>
-                        <CurrencyInput
-                          label="Spouse TFSA Balance"
-                          value={c.spouse?.tfsaBalance || 0}
-                          onValueChange={(v) => handleSpouseField('tfsaBalance', v)}
-                        />
-                      </FieldRow>
-                    </>
-                  )}
-                </>
-              )}
-
-              {step === 'debts' && (
-                <>
-                  <SectionTitle>Primary Residence</SectionTitle>
+            {step === 'debts' && (
+              <>
+                <FormCard title="Primary Residence">
                   <FieldRow>
-                    <CurrencyInput
-                      label="Home Value"
-                      value={c.primaryResidenceValue}
-                      onValueChange={(v) => handleField('primaryResidenceValue', v)}
-                    />
-                    <CurrencyInput
-                      label="Mortgage Balance"
-                      value={c.mortgageBalance}
-                      onValueChange={(v) => handleField('mortgageBalance', v)}
-                    />
+                    <CurrencyInput label="Home Value" value={c.primaryResidenceValue} onValueChange={(v) => handleField('primaryResidenceValue', v)} />
+                    <CurrencyInput label="Mortgage Balance" value={c.mortgageBalance} onValueChange={(v) => handleField('mortgageBalance', v)} />
                   </FieldRow>
                   <FieldRow>
-                    <Input
-                      label="Mortgage Rate (%)"
-                      type="number"
-                      step={0.01}
-                      min={0}
-                      max={15}
-                      value={c.mortgageRate ? (c.mortgageRate * 100).toFixed(2) : ''}
-                      onChange={(e) => handleField('mortgageRate', (parseFloat(e.target.value) || 0) / 100)}
-                      hint="Annual interest rate"
-                    />
-                    <Input
-                      label="Years Remaining"
-                      type="number"
-                      min={0}
-                      max={30}
-                      value={c.mortgageAmortizationYears || ''}
-                      onChange={(e) => handleField('mortgageAmortizationYears', parseInt(e.target.value) || 0)}
-                    />
+                    <Input label="Mortgage Rate (%)" type="number" step={0.01} min={0} max={15} value={c.mortgageRate ? (c.mortgageRate * 100).toFixed(2) : ''} onChange={(e) => handleField('mortgageRate', (parseFloat(e.target.value) || 0) / 100)} hint="Annual interest rate" />
+                    <Input label="Years Remaining" type="number" min={0} max={30} value={c.mortgageAmortizationYears || ''} onChange={(e) => handleField('mortgageAmortizationYears', parseInt(e.target.value) || 0)} />
                   </FieldRow>
+                </FormCard>
+                <FormCard title="Other Debts">
+                  <CurrencyInput label="Total Other Debts" value={c.otherDebts} onValueChange={(v) => handleField('otherDebts', v)} hint="Credit cards, loans, lines of credit, etc." />
+                </FormCard>
+              </>
+            )}
 
-                  <SectionDivider />
-
-                  <SectionTitle>Other Debts</SectionTitle>
-                  <FieldRow cols={1}>
-                    <CurrencyInput
-                      label="Total Other Debts"
-                      value={c.otherDebts}
-                      onValueChange={(v) => handleField('otherDebts', v)}
-                      hint="Credit cards, loans, lines of credit, etc."
-                    />
-                  </FieldRow>
-                </>
-              )}
-
-              {step === 'benefits' && (
-                <>
-                  <SectionTitle>CPP (Canada Pension Plan)</SectionTitle>
+            {step === 'benefits' && (
+              <>
+                <FormCard title="CPP (Canada Pension Plan)">
                   <FieldRow>
-                    <CurrencyInput
-                      label="Estimated CPP at 65 ($/month)"
-                      value={c.projectionParams.estimatedCppMonthly}
-                      onValueChange={(v) => handleParam('estimatedCppMonthly', v)}
-                      hint={c.annualIncome > 0 ? `Estimate based on income: ~$${Math.round(estimateCppMonthlyAt65(c.annualIncome))}/mo` : undefined}
-                    />
-                    <Input
-                      label="CPP Start Age"
-                      type="number"
-                      min={60}
-                      max={70}
-                      value={c.projectionParams.cppStartAge}
-                      onChange={(e) => handleParam('cppStartAge', parseInt(e.target.value) || 65)}
-                      hint="60 (early, reduced) to 70 (late, enhanced)"
-                    />
+                    <CurrencyInput label="Est. CPP at 65 ($/month)" value={c.projectionParams.estimatedCppMonthly} onValueChange={(v) => handleParam('estimatedCppMonthly', v)} hint={c.annualIncome > 0 ? `Based on income: ~$${Math.round(estimateCppMonthlyAt65(c.annualIncome))}/mo` : undefined} />
+                    <Input label="CPP Start Age" type="number" min={60} max={70} value={c.projectionParams.cppStartAge} onChange={(e) => handleParam('cppStartAge', parseInt(e.target.value) || 65)} hint="60 (reduced) to 70 (enhanced)" />
                   </FieldRow>
-
                   {c.hasSpouse && (
                     <FieldRow>
-                      <CurrencyInput
-                        label="Spouse CPP at 65 ($/month)"
-                        value={c.spouse?.estimatedCppMonthly || 0}
-                        onValueChange={(v) => handleSpouseField('estimatedCppMonthly', v)}
-                      />
-                      <Input
-                        label="Spouse CPP Start Age"
-                        type="number"
-                        min={60}
-                        max={70}
-                        value={c.spouse?.cppStartAge || 65}
-                        onChange={(e) => handleSpouseField('cppStartAge', parseInt(e.target.value) || 65)}
-                      />
+                      <CurrencyInput label="Spouse CPP at 65 ($/mo)" value={c.spouse?.estimatedCppMonthly || 0} onValueChange={(v) => handleSpouseField('estimatedCppMonthly', v)} />
+                      <Input label="Spouse CPP Start Age" type="number" min={60} max={70} value={c.spouse?.cppStartAge || 65} onChange={(e) => handleSpouseField('cppStartAge', parseInt(e.target.value) || 65)} />
                     </FieldRow>
                   )}
-
-                  <SectionDivider />
-
-                  <SectionTitle>OAS (Old Age Security)</SectionTitle>
-                  <FieldRow>
-                    <Input
-                      label="OAS Start Age"
-                      type="number"
-                      min={65}
-                      max={70}
-                      value={c.projectionParams.oasStartAge}
-                      onChange={(e) => handleParam('oasStartAge', parseInt(e.target.value) || 65)}
-                      hint="65 to 70. Deferring increases benefit by 0.6%/month."
-                    />
+                </FormCard>
+                <FormCard title="OAS (Old Age Security)">
+                  <FieldRow cols={1}>
+                    <Input label="OAS Start Age" type="number" min={65} max={70} value={c.projectionParams.oasStartAge} onChange={(e) => handleParam('oasStartAge', parseInt(e.target.value) || 65)} hint="65 to 70. Deferring increases benefit by 0.6%/month." />
                   </FieldRow>
-
                   {c.hasSpouse && (
-                    <FieldRow>
-                      <Input
-                        label="Spouse OAS Start Age"
-                        type="number"
-                        min={65}
-                        max={70}
-                        value={c.spouse?.oasStartAge || 65}
-                        onChange={(e) => handleSpouseField('oasStartAge', parseInt(e.target.value) || 65)}
-                      />
+                    <FieldRow cols={1}>
+                      <Input label="Spouse OAS Start Age" type="number" min={65} max={70} value={c.spouse?.oasStartAge || 65} onChange={(e) => handleSpouseField('oasStartAge', parseInt(e.target.value) || 65)} />
                     </FieldRow>
                   )}
-
-                  <SectionDivider />
-
-                  <SectionTitle>Employer Pension</SectionTitle>
-                  <Select
-                    label="Pension Type"
-                    value={c.pensionType}
-                    onChange={(e) => handleField('pensionType', e.target.value)}
-                    options={PENSION_OPTIONS}
-                  />
-
+                </FormCard>
+                <FormCard title="Employer Pension">
+                  <Select label="Pension Type" value={c.pensionType} onChange={(e) => handleField('pensionType', e.target.value)} options={PENSION_OPTIONS} />
                   {c.pensionType === 'db' && (
-                    <div className="mt-4">
-                      <FieldRow cols={1}>
-                        <CurrencyInput
-                          label="Annual Pension Benefit (at retirement)"
-                          value={c.pensionDetails?.annualBenefitEstimate || 0}
-                          onValueChange={(v) => handlePensionDetail('annualBenefitEstimate', v)}
-                        />
-                      </FieldRow>
-                    </div>
+                    <CurrencyInput label="Annual Pension Benefit (at retirement)" value={c.pensionDetails?.annualBenefitEstimate || 0} onValueChange={(v) => handlePensionDetail('annualBenefitEstimate', v)} />
                   )}
-
                   {c.pensionType === 'dc' && (
-                    <div className="mt-4 space-y-4">
-                      <FieldRow>
-                        <CurrencyInput
-                          label="Current Balance"
-                          value={c.pensionDetails?.currentBalance || 0}
-                          onValueChange={(v) => handlePensionDetail('currentBalance', v)}
-                        />
-                        <CurrencyInput
-                          label="Annual Contribution"
-                          value={c.pensionDetails?.annualContribution || 0}
-                          onValueChange={(v) => handlePensionDetail('annualContribution', v)}
-                          hint="Employee + employer combined"
-                        />
-                      </FieldRow>
-                    </div>
+                    <FieldRow>
+                      <CurrencyInput label="Current Balance" value={c.pensionDetails?.currentBalance || 0} onValueChange={(v) => handlePensionDetail('currentBalance', v)} />
+                      <CurrencyInput label="Annual Contribution" value={c.pensionDetails?.annualContribution || 0} onValueChange={(v) => handlePensionDetail('annualContribution', v)} hint="Employee + employer combined" />
+                    </FieldRow>
                   )}
-                </>
-              )}
+                </FormCard>
+              </>
+            )}
 
-              {step === 'insurance' && (
-                <>
-                  <Toggle
-                    label="Life Insurance"
-                    checked={c.hasLifeInsurance}
-                    onChange={(v) => handleField('hasLifeInsurance', v)}
-                  />
-
+            {step === 'insurance' && (
+              <>
+                <FormCard title="Life Insurance">
+                  <Toggle label="Has Life Insurance" checked={c.hasLifeInsurance} onChange={(v) => handleField('hasLifeInsurance', v)} />
                   {c.hasLifeInsurance && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-4">
+                    <div className="mt-3 pt-4 border-t border-gray-100 space-y-4">
                       <FieldRow>
-                        <CurrencyInput
-                          label="Coverage Amount"
-                          value={c.lifeInsuranceDetails?.coverageAmount || 0}
-                          onValueChange={(v) => handleInsuranceDetail('coverageAmount', v)}
-                        />
-                        <Select
-                          label="Type"
-                          value={c.lifeInsuranceDetails?.type || 'term'}
-                          onChange={(e) => handleInsuranceDetail('type', e.target.value as InsuranceType)}
-                          options={INSURANCE_TYPE_OPTIONS}
-                        />
+                        <CurrencyInput label="Coverage Amount" value={c.lifeInsuranceDetails?.coverageAmount || 0} onValueChange={(v) => handleInsuranceDetail('coverageAmount', v)} />
+                        <Select label="Type" value={c.lifeInsuranceDetails?.type || 'term'} onChange={(e) => handleInsuranceDetail('type', e.target.value as InsuranceType)} options={INSURANCE_TYPE_OPTIONS} />
                       </FieldRow>
-                      <Select
-                        label="Source"
-                        value={c.lifeInsuranceDetails?.source || 'personal'}
-                        onChange={(e) => handleInsuranceDetail('source', e.target.value as InsuranceSource)}
-                        options={INSURANCE_SOURCE_OPTIONS}
-                      />
+                      <Select label="Source" value={c.lifeInsuranceDetails?.source || 'personal'} onChange={(e) => handleInsuranceDetail('source', e.target.value as InsuranceSource)} options={INSURANCE_SOURCE_OPTIONS} />
                     </div>
                   )}
-
-                  <SectionDivider />
-
-                  <Toggle
-                    label="Disability Insurance"
-                    checked={c.hasDisabilityInsurance}
-                    onChange={(v) => handleField('hasDisabilityInsurance', v)}
-                  />
-
-                  <SectionDivider />
-
-                  <Toggle
-                    label="Critical Illness Insurance"
-                    checked={c.hasCriticalIllness}
-                    onChange={(v) => handleField('hasCriticalIllness', v)}
-                  />
-                </>
-              )}
-            </div>
+                </FormCard>
+                <FormCard title="Other Coverage">
+                  <Toggle label="Disability Insurance" checked={c.hasDisabilityInsurance} onChange={(v) => handleField('hasDisabilityInsurance', v)} />
+                  <div className="pt-3 border-t border-gray-100">
+                    <Toggle label="Critical Illness Insurance" checked={c.hasCriticalIllness} onChange={(v) => handleField('hasCriticalIllness', v)} />
+                  </div>
+                </FormCard>
+              </>
+            )}
 
             {/* Navigation buttons */}
-            <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-200">
+            <div className="flex items-center justify-between pt-4 pb-2">
               {currentStepIndex > 0 ? (
                 <button
                   onClick={goPrev}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-text-secondary bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-all"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M9 3L5 7L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -701,26 +470,14 @@ export default function SetupWizard() {
               ) : (
                 <div />
               )}
-
               <button
                 onClick={goNext}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-accent rounded-lg hover:bg-accent-hover transition-colors shadow-sm"
+                className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-amber-500 rounded-lg hover:bg-amber-400 shadow-md shadow-amber-500/20 transition-all"
               >
-                {currentStepIndex < STEPS.length - 1 ? (
-                  <>
-                    Next
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </>
-                ) : (
-                  <>
-                    View Projections
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </>
-                )}
+                {currentStepIndex < STEPS.length - 1 ? 'Next' : 'View Projections'}
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M5 3L9 7L5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
             </div>
           </div>

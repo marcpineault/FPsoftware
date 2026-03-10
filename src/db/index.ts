@@ -39,4 +39,14 @@ db.version(4).stores({
   });
 });
 
+// Version 5: Added mortgage rate/amortization fields
+db.version(5).stores({
+  clients: 'id, firstName, lastName, updatedAt',
+}).upgrade((tx) => {
+  return tx.table('clients').toCollection().modify((client) => {
+    client.mortgageRate ??= 0.05;
+    client.mortgageAmortizationYears ??= 25;
+  });
+});
+
 export { db };

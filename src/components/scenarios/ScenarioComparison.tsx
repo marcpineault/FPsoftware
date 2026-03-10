@@ -104,6 +104,33 @@ const PRESETS: Preset[] = [
       },
     ],
   },
+  {
+    label: 'OAS at 65 vs 67 vs 70',
+    description: 'Impact of deferring OAS for higher payments',
+    scenarios: [
+      { name: 'OAS at 65', overrides: { oasStartAge: 65 } },
+      { name: 'OAS at 67', overrides: { oasStartAge: 67 } },
+      { name: 'OAS at 70', overrides: { oasStartAge: 70 } },
+    ],
+  },
+  {
+    label: 'Spending: 70% vs 80% vs 90%',
+    description: 'Impact of retirement spending level on sustainability',
+    scenarios: [
+      { name: 'Frugal (70%)', overrides: { retirementSpendingRate: 0.70 } },
+      { name: 'Moderate (80%)', overrides: { retirementSpendingRate: 0.80 } },
+      { name: 'Comfortable (90%)', overrides: { retirementSpendingRate: 0.90 } },
+    ],
+  },
+  {
+    label: 'High Inflation Stress Test',
+    description: 'How does higher inflation impact the plan?',
+    scenarios: [
+      { name: 'Low (1.5%)', overrides: { inflationRate: 0.015 } },
+      { name: 'Normal (2.5%)', overrides: { inflationRate: 0.025 } },
+      { name: 'High (4%)', overrides: { inflationRate: 0.04 } },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------------ */

@@ -944,6 +944,31 @@ export function Profile() {
             />
           </Field>
         </div>
+        {c.mortgageBalance > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 pt-3 border-t border-card-border/60">
+            <Field label="Mortgage Rate (%)">
+              <input
+                type="number"
+                min={0}
+                max={15}
+                step={0.05}
+                value={((c.mortgageRate ?? 0.05) * 100).toFixed(2)}
+                onChange={(e) => handleField('mortgageRate', (parseFloat(e.target.value) || 5) / 100)}
+                className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-text-primary focus:border-navy focus:ring-1 focus:ring-navy/20"
+              />
+            </Field>
+            <Field label="Remaining Amortization (years)">
+              <input
+                type="number"
+                min={1}
+                max={30}
+                value={c.mortgageAmortizationYears ?? 25}
+                onChange={(e) => handleField('mortgageAmortizationYears', parseInt(e.target.value) || 25)}
+                className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-text-primary focus:border-navy focus:ring-1 focus:ring-navy/20"
+              />
+            </Field>
+          </div>
+        )}
       </Card>
 
       {/* Monthly Expenses */}

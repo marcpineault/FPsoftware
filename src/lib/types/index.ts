@@ -101,6 +101,8 @@ export interface Client {
   pensionDetails?: PensionDetails;
   primaryResidenceValue: number;
   mortgageBalance: number;
+  mortgageRate: number; // annual rate (e.g. 0.05 = 5%)
+  mortgageAmortizationYears: number; // remaining amortization
   otherDebts: number;
   monthlyExpenses: number;
 
@@ -138,6 +140,7 @@ export interface ProjectionRow {
   oasClawback?: number;
   spouseCpp?: number;
   spouseOas?: number;
+  gis?: number;
   pensionIncome: number;
   rrspRrifWithdrawals: number;
   rrifMinimumWithdrawal?: number;
@@ -210,6 +213,8 @@ export function createDefaultClient(id: string): Client {
     pensionType: 'none',
     primaryResidenceValue: 0,
     mortgageBalance: 0,
+    mortgageRate: 0.05,
+    mortgageAmortizationYears: 25,
     otherDebts: 0,
     monthlyExpenses: 0,
     hasLifeInsurance: false,

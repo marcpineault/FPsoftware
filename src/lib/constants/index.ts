@@ -43,6 +43,8 @@ export const PROVINCIAL_TAX_DATA: Record<CanadianProvince, {
 };
 
 // CPP constants
+export const CPP_YMPE_2025 = 71300; // Year's Maximum Pensionable Earnings
+export const CPP_BASIC_EXEMPTION = 3500;
 export const CPP_MAX_MONTHLY_2025 = 1364.60;
 export const CPP_EARLY_REDUCTION_PER_MONTH = 0.006; // 0.6% per month before 65
 export const CPP_LATE_ENHANCEMENT_PER_MONTH = 0.007; // 0.7% per month after 65
@@ -88,6 +90,16 @@ export const CESG_RATE = 0.20; // 20% match
 export const CESG_ANNUAL_MAX = 500; // per beneficiary
 export const CESG_LIFETIME_MAX = 7200; // per beneficiary
 export const RESP_BENEFICIARY_MAX_AGE = 17; // CESG eligibility ends after 17
+
+// GIS (Guaranteed Income Supplement) constants — 2025
+// Single: max $1,086.88/month, clawback at 50% of income above $0
+// Couple: max $654.23/month each, clawback at 25% of combined income
+export const GIS_MAX_MONTHLY_SINGLE = 1086.88;
+export const GIS_MAX_MONTHLY_COUPLE = 654.23;
+export const GIS_INCOME_THRESHOLD_SINGLE = 21768; // annual income cutoff (approx)
+export const GIS_INCOME_THRESHOLD_COUPLE = 28560;
+export const GIS_CLAWBACK_RATE_SINGLE = 0.50;
+export const GIS_CLAWBACK_RATE_COUPLE = 0.25;
 
 // Probate fees by province (simplified schedules)
 // Returns fee based on estate value

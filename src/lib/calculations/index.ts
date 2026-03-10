@@ -1,5 +1,8 @@
 import type { Client, ProjectionRow, KeyMetrics, ProjectionParams, CanadianProvince } from '../types';
 import {
+  CPP_MAX_MONTHLY_2025,
+  CPP_YMPE_2025,
+  CPP_BASIC_EXEMPTION,
   FEDERAL_TAX_BRACKETS,
   FEDERAL_BASIC_PERSONAL_AMOUNT,
   PROVINCIAL_TAX_DATA,
@@ -16,6 +19,12 @@ import {
   CESG_ANNUAL_MAX,
   CESG_LIFETIME_MAX,
   RESP_BENEFICIARY_MAX_AGE,
+  GIS_MAX_MONTHLY_SINGLE,
+  GIS_MAX_MONTHLY_COUPLE,
+  GIS_INCOME_THRESHOLD_SINGLE,
+  GIS_INCOME_THRESHOLD_COUPLE,
+  GIS_CLAWBACK_RATE_SINGLE,
+  GIS_CLAWBACK_RATE_COUPLE,
 } from '../constants';
 
 /* ------------------------------------------------------------------ */
@@ -31,6 +40,63 @@ function getAge(dateOfBirth: string, referenceYear: number): number {
 
 function getCurrentYear(): number {
   return new Date().getFullYear();
+}
+
+/* ------------------------------------------------------------------ */
+/*  Mortgage Amortization                                              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Calculate remaining mortgage balance after N years of payments.
+ * Uses standard amortization formula.
+ */
+function calculateMortgageRemaining(
+  originalBalance: number,
+  annualRate: number,
+  amortizationYears: number,
+  yearsElapsed: number,
+): number {
+  if (originalBalance <= 0 || yearsElapsed >= amortizationYears) return 0;
+  if (annualRate <= 0) {
+    // Interest-free: linear paydown
+    return Math.max(0, originalBalance * (1 - yearsElapsed / amortizationYears));
+  }
+  const monthlyRate = annualRate / 12;
+  const totalPayments = amortizationYears * 12;
+  const paymentsMade = yearsElapsed * 12;
+  // Monthly payment
+  const monthlyPayment = originalBalance * (monthlyRate * Math.pow(1 + monthlyRate, totalPayments))
+    / (Math.pow(1 + monthlyRate, totalPayments) - 1);
+  // Remaining balance after paymentsMade payments
+  const remaining = originalBalance * Math.pow(1 + monthlyRate, paymentsMade)
+    - monthlyPayment * (Math.pow(1 + monthlyRate, paymentsMade) - 1) / monthlyRate;
+  return Math.max(0, Math.round(remaining));
+}
+
+/* ------------------------------------------------------------------ */
+/*  GIS (Guaranteed Income Supplement)                                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Calculate GIS for low-income retirees aged 65+.
+ * GIS is clawed back based on net income (excluding OAS).
+ * Returns annual GIS amount.
+ */
+function calculateGis(
+  netIncomeExcludingOas: number,
+  hasSpouse: boolean,
+): number {
+  if (hasSpouse) {
+    const maxAnnual = GIS_MAX_MONTHLY_COUPLE * 12;
+    if (netIncomeExcludingOas >= GIS_INCOME_THRESHOLD_COUPLE) return 0;
+    const clawback = netIncomeExcludingOas * GIS_CLAWBACK_RATE_COUPLE;
+    return Math.max(0, Math.round(maxAnnual - clawback));
+  } else {
+    const maxAnnual = GIS_MAX_MONTHLY_SINGLE * 12;
+    if (netIncomeExcludingOas >= GIS_INCOME_THRESHOLD_SINGLE) return 0;
+    const clawback = netIncomeExcludingOas * GIS_CLAWBACK_RATE_SINGLE;
+    return Math.max(0, Math.round(maxAnnual - clawback));
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -569,6 +635,11 @@ export function generateProjections(client: Client): ProjectionRow[] {
     const oasClawback = oasGross > 0 ? calculateOasClawback(taxableIncome, oasGross) : 0;
     const oasNet = oasGross - oasClawback;
 
+    // GIS — for low-income retirees aged 65+
+    // Net income for GIS excludes OAS but includes CPP, pension, RRSP withdrawals
+    const incomeForGis = taxableIncome - oasGross; // GIS uses income excluding OAS
+    const gisAmount = (isRetired && age >= 65) ? calculateGis(incomeForGis, hasSpouse) : 0;
+
     // Recalculate taxable income with net OAS
     // Note: The clawback is technically a repayment, but for income tax purposes,
     // the full OAS is included in income and the clawback is deducted on the return.
@@ -615,8 +686,8 @@ export function generateProjections(client: Client): ProjectionRow[] {
       incomeTax = estimateIncomeTax(taxableIncome, client.province);
     }
 
-    // Total cash received (OAS is reduced by clawback)
-    const totalIncome = employmentIncome + cpp + oasNet + pensionIncome
+    // Total cash received (OAS is reduced by clawback, GIS is tax-free)
+    const totalIncome = employmentIncome + cpp + oasNet + gisAmount + pensionIncome
       + spouseEmploymentIncome + spouseCpp + spouseOasGross
       + rrspWithdrawal + tfsaWithdrawal + nonRegWithdrawal;
 
@@ -630,10 +701,12 @@ export function generateProjections(client: Client): ProjectionRow[] {
     const homeValue = Math.round(
       client.primaryResidenceValue * Math.pow(1 + Math.min(params.inflationRate, 0.03), i),
     );
-    const mortgageRemaining = Math.max(0, client.mortgageBalance - (i * client.mortgageBalance / 25));
+    const mortgageRate = client.mortgageRate ?? 0.05;
+    const mortgageAmort = client.mortgageAmortizationYears ?? 25;
+    const mortgageRemaining = calculateMortgageRemaining(client.mortgageBalance, mortgageRate, mortgageAmort, i);
     const netWorth = Math.round(rrspBalance) + Math.round(tfsaBalance)
       + Math.round(nonRegBalance) + Math.round(respBalance)
-      + homeValue - Math.round(mortgageRemaining)
+      + homeValue - mortgageRemaining
       - Math.max(0, client.otherDebts - (i * client.otherDebts / 10));
 
     rows.push({
@@ -647,6 +720,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
       oasClawback: oasClawback > 0 ? oasClawback : undefined,
       spouseCpp: hasSpouse && spouseCpp > 0 ? spouseCpp : undefined,
       spouseOas: hasSpouse && spouseOasGross > 0 ? spouseOasGross : undefined,
+      gis: gisAmount > 0 ? gisAmount : undefined,
       pensionIncome,
       rrspRrifWithdrawals: rrspWithdrawal,
       rrifMinimumWithdrawal: rrifMinimumWithdrawal > 0 ? rrifMinimumWithdrawal : undefined,
@@ -771,4 +845,23 @@ export function calculateKeyMetrics(
     avgEffectiveTaxRate,
     totalOasClawback,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/*  CPP Estimator — estimate monthly CPP at 65 based on income         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Rough estimate of CPP at age 65 based on current annual income.
+ * CPP replacement rate is ~25% of pensionable earnings between
+ * the basic exemption ($3,500) and the YMPE (~$71,300).
+ * This is a simplified estimate — actual CPP depends on full contribution history.
+ */
+export function estimateCppMonthlyAt65(annualIncome: number): number {
+  if (annualIncome <= CPP_BASIC_EXEMPTION) return 0;
+  const pensionableEarnings = Math.min(annualIncome, CPP_YMPE_2025) - CPP_BASIC_EXEMPTION;
+  const maxPensionableEarnings = CPP_YMPE_2025 - CPP_BASIC_EXEMPTION;
+  // CPP max at 65 is ~$1,364.60/month
+  const ratio = pensionableEarnings / maxPensionableEarnings;
+  return Math.round(CPP_MAX_MONTHLY_2025 * ratio);
 }

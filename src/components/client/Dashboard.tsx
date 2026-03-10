@@ -19,29 +19,15 @@ function calculateAge(dob: string): number | null {
 }
 
 function formatDate(date: Date | string | undefined): string {
-  if (!date) return 'Never';
+  if (!date) return '--';
   const d = typeof date === 'string' ? new Date(date) : date;
-  if (isNaN(d.getTime())) return 'Never';
-  return d.toLocaleDateString('en-CA', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-function formatCurrency(n: number): string {
-  if (!n) return '--';
-  return new Intl.NumberFormat('en-CA', {
-    style: 'currency',
-    currency: 'CAD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(n);
+  if (isNaN(d.getTime())) return '--';
+  return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { clients, loadClients, deleteClient, setCurrentClient, practiceSettings } = useAppStore();
+  const { clients, loadClients, deleteClient, setCurrentClient, practiceSettings, toggleSettings } = useAppStore();
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -57,7 +43,6 @@ export function Dashboard() {
     try {
       const id = uuidv4();
       const newClient = createDefaultClient(id);
-      // Apply practice default assumptions
       newClient.province = (practiceSettings.defaultProvince || 'ON') as typeof newClient.province;
       newClient.projectionParams.rrspReturnRate = practiceSettings.defaultRrspReturn / 100;
       newClient.projectionParams.tfsaReturnRate = practiceSettings.defaultTfsaReturn / 100;
@@ -65,7 +50,7 @@ export function Dashboard() {
       newClient.projectionParams.inflationRate = practiceSettings.defaultInflation / 100;
       await db.clients.put(newClient);
       setCurrentClient(newClient);
-      navigate(`/client/${id}/discovery`);
+      navigate(`/client/${id}/setup/client`);
     } catch (err) {
       console.error('Failed to create client:', err);
       setIsCreating(false);
@@ -73,39 +58,23 @@ export function Dashboard() {
   }, [isCreating, navigate, setCurrentClient, practiceSettings]);
 
   const handleDeleteClient = useCallback(
-    async (id: string, name: string) => {
+    async (e: React.MouseEvent, id: string, name: string) => {
+      e.stopPropagation();
       const displayName = name.trim() || 'this unnamed client';
-      const confirmed = window.confirm(
-        `Are you sure you want to delete ${displayName}? This action cannot be undone.`
-      );
-      if (!confirmed) return;
-
+      if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
       setDeletingId(id);
       try {
         await deleteClient(id);
-      } catch (err) {
-        console.error('Failed to delete client:', err);
       } finally {
         setDeletingId(null);
       }
     },
-    [deleteClient]
-  );
-
-  const handleResumeClient = useCallback(
-    (id: string) => {
-      navigate(`/client/${id}/discovery`);
-    },
-    [navigate]
+    [deleteClient],
   );
 
   const handleExportAll = useCallback(() => {
     if (clients.length === 0) return;
-    const data = {
-      exportedAt: new Date().toISOString(),
-      version: 1,
-      clients,
-    };
+    const data = { exportedAt: new Date().toISOString(), version: 1, clients };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -133,7 +102,6 @@ export function Dashboard() {
         let imported = 0;
         for (const c of importClients) {
           if (c.id && c.firstName !== undefined) {
-            // Restore dates
             c.createdAt = new Date(c.createdAt);
             c.updatedAt = new Date(c.updatedAt);
             await db.clients.put(c);
@@ -144,109 +112,56 @@ export function Dashboard() {
         setImportStatus(`Imported ${imported} client${imported !== 1 ? 's' : ''}`);
         setTimeout(() => setImportStatus(null), 3000);
       } catch {
-        setImportStatus('Failed to import file');
+        setImportStatus('Failed to import');
         setTimeout(() => setImportStatus(null), 3000);
       }
     };
     input.click();
   }, [loadClients]);
 
-  const handleExportClient = useCallback((client: typeof clients[0]) => {
-    const data = {
-      exportedAt: new Date().toISOString(),
-      version: 1,
-      clients: [client],
-    };
-    const name = [client.firstName, client.lastName].filter(Boolean).join('-') || 'client';
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${name.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }, []);
-
-  const completedPlans = clients.filter(c => c.projectionsViewed).length;
-  const totalAssets = clients.reduce((sum, c) =>
-    sum + (c.rrspBalance || 0) + (c.tfsaBalance || 0) + (c.nonRegisteredInvestments || 0), 0
-  );
-
   return (
-    <div className="min-h-screen bg-bg-secondary">
-      {/* Hero header */}
-      <header className="bg-navy relative overflow-hidden">
-        {/* Subtle texture */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(184,134,11,0.06)_0%,transparent_60%)]" />
-        <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between">
-            <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-accent-light to-accent flex items-center justify-center shadow-lg shadow-accent/20">
-                  <span className="text-white font-serif text-lg font-bold leading-none">M</span>
-                </div>
-                <span className="text-[11px] text-white/30 tracking-[0.2em] uppercase">{practiceSettings.firmName}</span>
-              </div>
-              <h1 className="font-serif text-3xl text-white tracking-wide">
-                Client Dashboard
-              </h1>
-              <p className="mt-2 text-sm text-white/50 font-light">
-                {new Date().toLocaleDateString('en-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
+    <div className="min-h-full bg-gray-50">
+      {/* Simple header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+              <span className="text-white font-serif text-sm font-bold">M</span>
             </div>
-
-            {/* Quick stats */}
-            {clients.length > 0 && (
-              <div className="hidden sm:flex items-center gap-8">
-                <div className="text-right">
-                  <p className="text-[11px] text-white/30 tracking-wider uppercase">Clients</p>
-                  <p className="font-serif text-2xl text-white mt-0.5">{clients.length}</p>
-                </div>
-                <div className="w-px h-10 bg-white/10" />
-                <div className="text-right">
-                  <p className="text-[11px] text-white/30 tracking-wider uppercase">Plans Complete</p>
-                  <p className="font-serif text-2xl text-white mt-0.5">{completedPlans}</p>
-                </div>
-                {totalAssets > 0 && (
-                  <>
-                    <div className="w-px h-10 bg-white/10" />
-                    <div className="text-right">
-                      <p className="text-[11px] text-white/30 tracking-wider uppercase">AUM</p>
-                      <p className="font-serif text-2xl text-white mt-0.5">{formatCurrency(totalAssets)}</p>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+            <div>
+              <h1 className="text-lg font-semibold text-text-primary">
+                {practiceSettings.firmName || 'Meridian'}
+              </h1>
+            </div>
           </div>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Toolbar */}
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-text-secondary tracking-wider uppercase">
-            {isLoading ? 'Loading...' : `${clients.length} ${clients.length === 1 ? 'Client' : 'Clients'}`}
-            {importStatus && (
-              <span className="ml-3 text-xs text-positive font-normal normal-case">{importStatus}</span>
-            )}
-          </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleNewClient}
               disabled={isCreating}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-accent-hover hover:shadow-md focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
               {isCreating ? 'Creating...' : 'New Client'}
             </button>
+            <button
+              onClick={toggleSettings}
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-gray-100 transition-all"
+              aria-label="Settings"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M6.5 1.5h3l.3 1.8a5.5 5.5 0 011.3.7l1.7-.7 1.5 2.6-1.4 1.1a5.5 5.5 0 010 1.5l1.4 1.1-1.5 2.6-1.7-.7a5.5 5.5 0 01-1.3.7l-.3 1.8h-3l-.3-1.8a5.5 5.5 0 01-1.3-.7l-1.7.7-1.5-2.6 1.4-1.1a5.5 5.5 0 010-1.5L1.7 5.9l1.5-2.6 1.7.7a5.5 5.5 0 011.3-.7L6.5 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+                <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" />
+              </svg>
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Loading state */}
+      {/* Main content */}
+      <main className="max-w-5xl mx-auto px-6 py-6">
+        {/* Loading */}
         {isLoading && (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
@@ -255,181 +170,98 @@ export function Dashboard() {
 
         {/* Empty state */}
         {!isLoading && clients.length === 0 && (
-          <div className="animate-card-enter rounded-xl border border-card-border bg-card-bg px-6 py-20 text-center shadow-sm">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-bg-secondary flex items-center justify-center mb-5">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="text-text-tertiary">
-                <circle cx="14" cy="10" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M5 26c0-5 4-9 9-9s9 4 9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <div className="rounded-xl border border-gray-200 bg-white px-6 py-16 text-center">
+            <div className="w-14 h-14 mx-auto rounded-xl bg-gray-100 flex items-center justify-center mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-text-tertiary">
+                <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M5 21c0-3.87 3.13-7 7-7s7 3.13 7 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
-            <h3 className="font-serif text-xl text-text-primary">
-              Welcome to Meridian
-            </h3>
-            <p className="mx-auto mt-3 max-w-md text-sm text-text-secondary leading-relaxed">
-              Begin by creating your first client. You'll walk through discovery, build their financial
-              profile, generate retirement projections, and deliver a comprehensive plan.
+            <h3 className="text-lg font-semibold text-text-primary">No clients yet</h3>
+            <p className="mt-2 text-sm text-text-secondary max-w-sm mx-auto">
+              Create your first client to begin building their financial plan.
             </p>
             <button
               onClick={handleNewClient}
               disabled={isCreating}
-              className="mt-8 inline-flex items-center gap-2.5 rounded-lg bg-accent px-7 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-accent-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent-hover transition-colors disabled:opacity-50"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
-              {isCreating ? 'Creating...' : 'Create Your First Client'}
+              Create First Client
             </button>
           </div>
         )}
 
-        {/* Client cards */}
+        {/* Client table */}
         {!isLoading && clients.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 stagger-children">
-            {clients.map((client) => {
-              const fullName =
-                [client.firstName, client.lastName].filter(Boolean).join(' ') ||
-                'Unnamed Client';
-              const age = calculateAge(client.dateOfBirth);
-              const isDeleting = deletingId === client.id;
-              const totalSavings = (client.rrspBalance || 0) + (client.tfsaBalance || 0) + (client.nonRegisteredInvestments || 0);
-              const completedModules = [client.discoveryComplete, client.profileComplete, client.projectionsViewed].filter(Boolean).length;
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {importStatus && (
+              <div className="px-4 py-2 bg-green-50 text-green-700 text-sm border-b border-green-100">
+                {importStatus}
+              </div>
+            )}
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider px-4 py-3">Name</th>
+                  <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider px-4 py-3">Province</th>
+                  <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider px-4 py-3">Age</th>
+                  <th className="text-left text-xs font-medium text-text-tertiary uppercase tracking-wider px-4 py-3">Last Updated</th>
+                  <th className="text-right text-xs font-medium text-text-tertiary uppercase tracking-wider px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clients.map((client) => {
+                  const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ') || 'Unnamed Client';
+                  const age = calculateAge(client.dateOfBirth);
+                  const isDeleting = deletingId === client.id;
 
-              return (
-                <div
-                  key={client.id}
-                  className="group relative rounded-xl border border-card-border bg-card-bg shadow-sm transition-all duration-200 hover:shadow-md hover:border-card-border-hover"
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleResumeClient(client.id)}
-                    className="block w-full cursor-pointer p-5 text-left focus:outline-none rounded-xl"
-                  >
-                    {/* Name row */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <h3 className="font-serif text-lg text-text-primary truncate tracking-wide">
-                          {fullName}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          {age !== null && (
-                            <span className="text-xs text-text-tertiary">Age {age}</span>
-                          )}
-                          {age !== null && client.province && (
-                            <span className="text-xs text-text-tertiary/40">&middot;</span>
-                          )}
-                          {client.province && (
-                            <span className="text-xs text-text-tertiary">{client.province}</span>
-                          )}
-                        </div>
-                      </div>
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        className="mt-1.5 shrink-0 text-text-tertiary/40 transition-all duration-200 group-hover:text-accent group-hover:translate-x-0.5"
-                      >
-                        <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-
-                    {/* Financial summary */}
-                    {(totalSavings > 0 || client.annualIncome > 0) && (
-                      <div className="mt-4 pt-3 border-t border-card-border/60 space-y-1.5">
-                        {client.annualIncome > 0 && (
-                          <div className="flex items-baseline justify-between">
-                            <span className="text-[11px] text-text-tertiary tracking-wider uppercase">Income</span>
-                            <span className="tabular-nums text-sm text-text-secondary">{formatCurrency(client.annualIncome)}</span>
-                          </div>
-                        )}
-                        {totalSavings > 0 && (
-                          <div className="flex items-baseline justify-between">
-                            <span className="text-[11px] text-text-tertiary tracking-wider uppercase">Total Savings</span>
-                            <span className="tabular-nums text-sm font-medium text-text-primary">{formatCurrency(totalSavings)}</span>
-                          </div>
-                        )}
-                        {client.targetRetirementAge > 0 && age !== null && (
-                          <div className="flex items-baseline justify-between">
-                            <span className="text-[11px] text-text-tertiary tracking-wider uppercase">Retirement</span>
-                            <span className="text-xs text-text-secondary">
-                              Age {client.targetRetirementAge}
-                              {client.targetRetirementAge > age && ` (${client.targetRetirementAge - age}y away)`}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Footer: date + badges */}
-                    <div className="mt-3 flex items-center justify-between">
-                      <p className="text-[11px] text-text-tertiary">
-                        {formatDate(client.updatedAt)}
-                      </p>
-                      <div className="flex items-center gap-1">
-                        {[0, 1, 2].map((i) => (
-                          <span
-                            key={i}
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              i < completedModules ? 'bg-positive' : 'bg-card-border'
-                            }`}
-                          />
-                        ))}
-                        <span className="text-[10px] text-text-tertiary ml-1">{completedModules}/3</span>
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Card actions */}
-                  <div className="absolute right-2 top-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100 flex items-center gap-0.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleExportClient(client);
-                      }}
-                      className="rounded-lg p-1.5 text-text-tertiary/50 transition-all duration-150 hover:bg-accent/10 hover:text-accent"
-                      title="Export client"
+                  return (
+                    <tr
+                      key={client.id}
+                      onClick={() => navigate(`/client/${client.id}/setup/client`)}
+                      className="border-b border-gray-50 last:border-0 hover:bg-gray-50 cursor-pointer transition-colors"
                     >
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                        <path d="M7 10V3M4.5 5.5L7 3l2.5 2.5M3 11h8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClient(
-                          client.id,
-                          `${client.firstName} ${client.lastName}`
-                        );
-                      }}
-                      disabled={isDeleting}
-                      className="rounded-lg p-1.5 text-text-tertiary/50 transition-all duration-150 hover:bg-negative/10 hover:text-negative"
-                      title="Delete client"
-                    >
-                      {isDeleting ? (
-                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-negative border-t-transparent" />
-                      ) : (
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path d="M2.5 4h9M5 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1.5 0v7a1.5 1.5 0 01-1.5 1.5H5A1.5 1.5 0 013.5 11V4h7z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-medium text-text-primary">{fullName}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-text-secondary">{client.province || '--'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-text-secondary tabular-nums">{age ?? '--'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-text-tertiary">{formatDate(client.updatedAt)}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={(e) => handleDeleteClient(e, client.id, fullName)}
+                          disabled={isDeleting}
+                          className="text-xs text-text-tertiary hover:text-negative transition-colors px-2 py-1 rounded"
+                          title="Delete"
+                        >
+                          {isDeleting ? '...' : 'Delete'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
 
-        {/* Data management — subtle footer links */}
+        {/* Footer links */}
         {!isLoading && (
-          <div className="mt-8 pt-4 border-t border-card-border/50 flex items-center gap-4">
+          <div className="mt-6 flex items-center gap-4">
             <button
               onClick={handleImport}
               className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
             >
-              Import Clients
+              Import
             </button>
             {clients.length > 0 && (
               <button
@@ -439,12 +271,6 @@ export function Dashboard() {
                 Export Backup
               </button>
             )}
-            <button
-              onClick={() => navigate('/tools')}
-              className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
-            >
-              Calculators
-            </button>
           </div>
         )}
       </main>

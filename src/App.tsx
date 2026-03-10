@@ -1,13 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/layout';
 import { Dashboard } from './components/client/Dashboard';
 
-// Lazy-load heavy route components for code splitting
-const Discovery = lazy(() => import('./components/discovery/Discovery').then(m => ({ default: m.Discovery })));
-const Profile = lazy(() => import('./components/client/Profile').then(m => ({ default: m.Profile })));
+// Lazy-load route components
+const SetupWizard = lazy(() => import('./components/setup/SetupWizard'));
 const Projections = lazy(() => import('./components/projections/Projections').then(m => ({ default: m.Projections })));
-const Summary = lazy(() => import('./components/recommendations/Summary'));
 const ScenarioComparison = lazy(() => import('./components/scenarios/ScenarioComparison').then(m => ({ default: m.ScenarioComparison })));
 const InsuranceNeeds = lazy(() => import('./components/insurance/InsuranceNeeds').then(m => ({ default: m.InsuranceNeeds })));
 const PlanReport = lazy(() => import('./components/recommendations/PlanReport'));
@@ -28,19 +26,31 @@ function App() {
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/client/:id/discovery" element={<Discovery />} />
-            <Route path="/client/:id/profile" element={<Profile />} />
+            <Route path="/client/:id/setup" element={<Navigate to="client" replace />} />
+            <Route path="/client/:id/setup/:step" element={<SetupWizard />} />
             <Route path="/client/:id/projections" element={<Projections />} />
             <Route path="/client/:id/scenarios" element={<ScenarioComparison />} />
             <Route path="/client/:id/insurance" element={<InsuranceNeeds />} />
-            <Route path="/client/:id/summary" element={<Summary />} />
             <Route path="/client/:id/report" element={<PlanReport />} />
             <Route path="/tools" element={<QuickCalc />} />
+            {/* Redirect old routes */}
+            <Route path="/client/:id/discovery" element={<RedirectToSetup />} />
+            <Route path="/client/:id/profile" element={<RedirectToSetup />} />
+            <Route path="/client/:id/summary" element={<RedirectToReport />} />
           </Route>
         </Routes>
       </Suspense>
     </BrowserRouter>
   );
+}
+
+// Redirect components for old routes
+function RedirectToSetup() {
+  return <Navigate to="../setup/client" replace />;
+}
+
+function RedirectToReport() {
+  return <Navigate to="../report" replace />;
 }
 
 export default App;

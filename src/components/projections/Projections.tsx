@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
 import { generateProjections, calculateKeyMetrics } from '../../lib/calculations';
 import type { ProjectionParams, ProjectionRow } from '../../lib/types';
@@ -229,7 +229,6 @@ const CHART_COLORS = {
 
 export function Projections() {
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
   const { currentClient, updateClient } = useAppStore();
 
   const [view, setView] = useState<'table' | 'chart' | 'balances' | 'income'>('table');
@@ -371,15 +370,6 @@ export function Projections() {
     [],
   );
 
-  // Navigation
-  const handleBack = useCallback(() => {
-    navigate(`/client/${id}/profile`);
-  }, [navigate, id]);
-
-  const handleNext = useCallback(() => {
-    updateClient({ projectionsViewed: true });
-    navigate(`/client/${id}/summary`);
-  }, [navigate, id, updateClient]);
 
   // Mark as viewed on mount
   useEffect(() => {
@@ -435,7 +425,7 @@ export function Projections() {
   /* -------------------------------------------------------------- */
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Page header */}
       <div>
         <h1 className="font-serif text-2xl text-text-primary tracking-wide">
@@ -1157,43 +1147,6 @@ export function Projections() {
         </div>
       )}
 
-      {/* -------------------------------------------------------- */}
-      {/*  NAVIGATION                                               */}
-      {/* -------------------------------------------------------- */}
-
-      <div className="flex items-center justify-between pt-2 pb-4">
-        <button
-          onClick={handleBack}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-card-border bg-white text-sm font-medium text-text-primary hover:bg-bg-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path
-              d="M8.5 3L4.5 7L8.5 11"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Back: Profile
-        </button>
-
-        <button
-          onClick={handleNext}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
-        >
-          Next: Summary
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path
-              d="M5.5 3L9.5 7L5.5 11"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
     </div>
   );
 }

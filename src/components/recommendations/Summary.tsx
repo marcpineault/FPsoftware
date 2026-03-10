@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import type { KeyboardEvent } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { useAppStore } from '../../store';
 import { generateProjections, calculateKeyMetrics, estimateEstateTaxBill } from '../../lib/calculations';
@@ -743,7 +743,8 @@ function ActionItemRow({
 // ---------------------------------------------------------------------------
 
 export default function Summary() {
-  useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { currentClient, updateClient } = useAppStore();
 
   // Local state
@@ -1275,12 +1276,27 @@ export default function Summary() {
               <ClipboardIcon className="h-4 w-4" />
               {copySuccess ? 'Copied!' : 'Copy to Clipboard'}
             </button>
+
+            <button
+              type="button"
+              onClick={() => navigate(`/client/${id}/report`)}
+              className="inline-flex items-center gap-2 rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy/90 focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                <line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                <line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                <line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              Full Plan Report
+            </button>
           </div>
 
           <p className="mt-3 text-xs text-text-secondary">
             Print creates a clean, print-friendly version. Copy to Clipboard
-            generates a plain-text summary you can paste into an email or
-            document.
+            generates a plain-text summary. Full Plan Report opens a
+            comprehensive, printable financial plan document with narrative
+            sections.
           </p>
         </div>
       </section>

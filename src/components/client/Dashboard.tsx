@@ -57,6 +57,12 @@ export function Dashboard() {
     try {
       const id = uuidv4();
       const newClient = createDefaultClient(id);
+      // Apply practice default assumptions
+      newClient.province = (practiceSettings.defaultProvince || 'ON') as typeof newClient.province;
+      newClient.projectionParams.rrspReturnRate = practiceSettings.defaultRrspReturn / 100;
+      newClient.projectionParams.tfsaReturnRate = practiceSettings.defaultTfsaReturn / 100;
+      newClient.projectionParams.nonRegReturnRate = practiceSettings.defaultNonRegReturn / 100;
+      newClient.projectionParams.inflationRate = practiceSettings.defaultInflation / 100;
       await db.clients.put(newClient);
       setCurrentClient(newClient);
       navigate(`/client/${id}/discovery`);
@@ -64,7 +70,7 @@ export function Dashboard() {
       console.error('Failed to create client:', err);
       setIsCreating(false);
     }
-  }, [isCreating, navigate, setCurrentClient]);
+  }, [isCreating, navigate, setCurrentClient, practiceSettings]);
 
   const handleDeleteClient = useCallback(
     async (id: string, name: string) => {

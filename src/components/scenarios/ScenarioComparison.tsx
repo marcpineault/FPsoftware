@@ -210,7 +210,7 @@ interface ParamEditorProps {
 
 function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: ParamEditorProps) {
   const inputClass =
-    'w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-slate-800 focus:ring-2 focus:ring-navy/20 focus:outline-none transition-colors';
+    'w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-colors';
 
   const handleParamChange = (key: keyof ProjectionParams, value: number) => {
     onChange(index, {
@@ -601,7 +601,7 @@ export function ScenarioComparison() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-card-border/50">
+              <tbody className="divide-y divide-gray-200/50">
                 {/* Key differing parameters */}
                 <MetricRow
                   label="Retirement Age"
@@ -727,7 +727,7 @@ export function ScenarioComparison() {
       <div className="flex items-center justify-between pt-2 pb-4">
         <button
           onClick={() => navigate(`/client/${id}/projections`)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-slate-800 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-slate-800 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path
@@ -743,7 +743,7 @@ export function ScenarioComparison() {
 
         <button
           onClick={() => navigate(`/client/${id}/summary`)}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
         >
           Next: Summary
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

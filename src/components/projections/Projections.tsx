@@ -607,7 +607,7 @@ export function Projections() {
                   type="checkbox"
                   checked={localParams.enablePensionSplitting}
                   onChange={(e) => handleParamChange('enablePensionSplitting', e.target.checked)}
-                  className="rounded border-gray-200 text-amber-600 focus:ring-accent/20"
+                  className="rounded border-gray-200 text-amber-600 focus:ring-amber-500/20"
                 />
                 Pension Splitting
               </label>
@@ -616,7 +616,7 @@ export function Projections() {
                   type="checkbox"
                   checked={localParams.earlyRrifConversion ?? false}
                   onChange={(e) => handleParamChange('earlyRrifConversion', e.target.checked)}
-                  className="rounded border-gray-200 text-amber-600 focus:ring-accent/20"
+                  className="rounded border-gray-200 text-amber-600 focus:ring-amber-500/20"
                 />
                 Early RRIF at 65
                 <span className="text-xs text-slate-400">(enables splitting)</span>

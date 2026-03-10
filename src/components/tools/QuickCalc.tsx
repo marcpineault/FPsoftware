@@ -61,7 +61,7 @@ function CalcInput({
           step={step}
           min={min}
           max={max}
-          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-800 tabular-nums focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none"
+          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-800 tabular-nums focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
         />
         {suffix && <span className="text-xs text-slate-400">{suffix}</span>}
       </div>
@@ -213,7 +213,7 @@ function RrspVsTfsaCalc() {
         <ResultRow label="RRSP (after withdrawal tax)" value={fmt(result.rrspAfterTax)} />
         <ResultRow label="RRSP + Refund Reinvested" value={fmt(result.rrspWithRefund)} highlight />
         <ResultRow label="TFSA (tax-free)" value={fmt(result.tfsaFuture)} highlight />
-        <div className="mt-2 text-xs text-accent font-medium">
+        <div className="mt-2 text-xs text-amber-600 font-medium">
           {result.winner === 'RRSP'
             ? 'RRSP wins when current marginal rate > retirement rate'
             : 'TFSA wins when retirement rate >= current rate'}
@@ -270,7 +270,7 @@ function TaxEstimator() {
           <select
             value={province}
             onChange={(e) => setProvince(e.target.value as CanadianProvince)}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none"
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none"
           >
             {Object.entries(PROVINCE_NAMES).map(([code, name]) => (
               <option key={code} value={code}>{name}</option>
@@ -314,11 +314,11 @@ export default function QuickCalc() {
         <div className="mb-6">
           <button
             onClick={() => navigate('/')}
-            className="text-sm text-accent hover:text-accent-hover mb-4 inline-block"
+            className="text-sm text-amber-600 hover:text-amber-500 mb-4 inline-block"
           >
             &larr; Back to Dashboard
           </button>
-          <h1 className="font-serif text-2xl text-slate-800 tracking-wide">Quick Calculators</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-wide">Quick Calculators</h1>
           <p className="text-sm text-slate-500 mt-1">
             Financial planning tools for quick calculations
           </p>
@@ -332,7 +332,7 @@ export default function QuickCalc() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-navy text-white shadow-sm'
+                  ? 'bg-slate-800 text-white shadow-sm'
                   : 'text-slate-500 hover:text-slate-800 hover:bg-gray-50'
               }`}
             >

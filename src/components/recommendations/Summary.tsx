@@ -226,6 +226,13 @@ function generateFindings(
     }
   }
 
+  // 16. Capital gains inclusion rate warning for large non-reg portfolios
+  if (client.nonRegisteredInvestments > 500000) {
+    findings.push(
+      `Non-registered portfolio of ${formatCurrency(client.nonRegisteredInvestments)} may trigger the enhanced capital gains inclusion rate (66.67%) on gains exceeding $250,000. Consider crystallizing gains gradually or using tax-loss harvesting strategies.`,
+    );
+  }
+
   return findings;
 }
 

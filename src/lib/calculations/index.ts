@@ -267,6 +267,22 @@ function getOptimalRrspWithdrawalTarget(
  * We also model a blended annual taxable distribution of ~2% of balance
  * (dividends + interest generated within the account).
  */
+/**
+ * Capital gains inclusion rate (2024+ rules):
+ * - First $250,000 of capital gains: 50% inclusion
+ * - Above $250,000: 66.67% inclusion (2/3)
+ * For corporations and trusts: 66.67% from dollar one.
+ */
+function calculateCapitalGainsInclusion(capitalGain: number): number {
+  if (capitalGain <= 0) return 0;
+  const THRESHOLD = 250_000;
+  if (capitalGain <= THRESHOLD) {
+    return capitalGain * 0.5;
+  }
+  // First $250K at 50%, remainder at 66.67%
+  return THRESHOLD * 0.5 + (capitalGain - THRESHOLD) * (2 / 3);
+}
+
 function calculateNonRegTaxableGain(
   withdrawalAmount: number,
   currentBalance: number,
@@ -278,8 +294,8 @@ function calculateNonRegTaxableGain(
   // Capital gain = withdrawal - proportional ACB
   const acbPortion = currentAcb * proportion;
   const capitalGain = Math.max(0, withdrawalAmount - acbPortion);
-  // 50% inclusion rate for capital gains
-  return Math.round(capitalGain * 0.5);
+  // Tiered inclusion: 50% up to $250K, 66.67% above
+  return Math.round(calculateCapitalGainsInclusion(capitalGain));
 }
 
 /**
@@ -932,9 +948,9 @@ export function estimateEstateTaxBill(
   // RRSP/RRIF: fully taxable as income in year of death
   const rrspTaxableIncome = rrspRrifBalance;
 
-  // Non-reg: capital gain at 50% inclusion
+  // Non-reg: capital gain with tiered inclusion (50% up to $250K, 66.67% above)
   const capitalGain = Math.max(0, nonRegBalance - nonRegAcb);
-  const taxableCapitalGain = capitalGain * 0.5;
+  const taxableCapitalGain = calculateCapitalGainsInclusion(capitalGain);
 
   // Total taxable income on the terminal return
   const totalTaxableIncome = rrspTaxableIncome + taxableCapitalGain;

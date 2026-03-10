@@ -300,7 +300,7 @@ export default function PlanReport() {
   if (!currentClient || !metrics) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-text-secondary text-sm">No client data available.</p>
+        <p className="text-slate-500 text-sm">No client data available.</p>
       </div>
     );
   }
@@ -329,18 +329,18 @@ export default function PlanReport() {
 
       <div className="space-y-8 print:space-y-6">
         {/* Cover / Header */}
-        <header className="text-center border-b-2 border-navy pb-6">
-          <p className="text-xs tracking-[0.3em] uppercase text-text-tertiary mb-2">
+        <header className="text-center border-b-2 border-slate-800 pb-6">
+          <p className="text-xs tracking-[0.3em] uppercase text-slate-400 mb-2">
             Confidential Financial Plan
           </p>
-          <h1 className="font-serif text-3xl text-navy tracking-wide">
+          <h1 className="text-3xl font-bold text-slate-800 tracking-wide">
             {client.firstName} {client.lastName}
             {client.hasSpouse && client.spouse && ` & ${client.spouse.firstName} ${client.spouse.lastName}`}
           </h1>
-          <p className="mt-2 text-sm text-text-secondary">
+          <p className="mt-2 text-sm text-slate-500">
             Prepared {new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
-          <p className="text-xs text-text-tertiary mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             {practiceSettings.firmName}
             {practiceSettings.advisorName && ` — ${practiceSettings.advisorName}`}
           </p>
@@ -348,7 +348,7 @@ export default function PlanReport() {
 
         {/* Executive Summary */}
         <Section title="Executive Summary">
-          <p className="text-sm text-text-primary leading-relaxed">
+          <p className="text-sm text-slate-800 leading-relaxed">
             {generateExecutiveSummary(client, metrics, projections)}
           </p>
         </Section>
@@ -363,7 +363,7 @@ export default function PlanReport() {
             <SnapshotItem label="Target Retirement" value={`Age ${client.projectionParams.retirementAge}`} />
             <SnapshotItem label="Total Savings" value={fmt(totalSavings)} />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-card-border/60">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-gray-200/60">
             <SnapshotItem label="RRSP" value={fmt(client.rrspBalance)} small />
             <SnapshotItem label="TFSA" value={fmt(client.tfsaBalance)} small />
             <SnapshotItem label="Non-Registered" value={fmt(client.nonRegisteredInvestments)} small />
@@ -410,7 +410,7 @@ export default function PlanReport() {
         {/* Retirement Income Analysis */}
         <Section title="Retirement Income Analysis">
           {generateRetirementSection(client, metrics, projections).map((p, i) => (
-            <p key={i} className="text-sm text-text-primary leading-relaxed mb-3">
+            <p key={i} className="text-sm text-slate-800 leading-relaxed mb-3">
               {p}
             </p>
           ))}
@@ -421,29 +421,29 @@ export default function PlanReport() {
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b-2 border-navy">
-                  <th className="text-left py-2 pr-2 font-semibold text-navy">Age</th>
-                  <th className="text-right py-2 px-2 font-semibold text-navy">Income</th>
-                  <th className="text-right py-2 px-2 font-semibold text-navy">CPP</th>
-                  <th className="text-right py-2 px-2 font-semibold text-navy">OAS</th>
-                  <th className="text-right py-2 px-2 font-semibold text-navy">Tax</th>
-                  <th className="text-right py-2 px-2 font-semibold text-navy">After-Tax</th>
-                  <th className="text-right py-2 px-2 font-semibold text-navy">Expenses</th>
-                  <th className="text-right py-2 px-2 font-semibold text-navy">RRSP/RRIF</th>
-                  <th className="text-right py-2 px-2 font-semibold text-navy">TFSA</th>
-                  <th className="text-right py-2 pl-2 font-semibold text-navy">Net Worth</th>
+                <tr className="border-b-2 border-slate-800">
+                  <th className="text-left py-2 pr-2 font-semibold text-slate-800">Age</th>
+                  <th className="text-right py-2 px-2 font-semibold text-slate-800">Income</th>
+                  <th className="text-right py-2 px-2 font-semibold text-slate-800">CPP</th>
+                  <th className="text-right py-2 px-2 font-semibold text-slate-800">OAS</th>
+                  <th className="text-right py-2 px-2 font-semibold text-slate-800">Tax</th>
+                  <th className="text-right py-2 px-2 font-semibold text-slate-800">After-Tax</th>
+                  <th className="text-right py-2 px-2 font-semibold text-slate-800">Expenses</th>
+                  <th className="text-right py-2 px-2 font-semibold text-slate-800">RRSP/RRIF</th>
+                  <th className="text-right py-2 px-2 font-semibold text-slate-800">TFSA</th>
+                  <th className="text-right py-2 pl-2 font-semibold text-slate-800">Net Worth</th>
                 </tr>
               </thead>
               <tbody>
                 {keyYears.map((row, i) => (
                   <tr
                     key={row.year}
-                    className={`border-b border-card-border/40 ${row.isRetired && !keyYears[i - 1]?.isRetired ? 'bg-accent/5 font-medium' : ''}`}
+                    className={`border-b border-gray-200/40 ${row.isRetired && !keyYears[i - 1]?.isRetired ? 'bg-amber-50 font-medium' : ''}`}
                   >
                     <td className="py-1.5 pr-2 tabular-nums">
                       {row.age}
                       {row.isRetired && !keyYears[i - 1]?.isRetired && (
-                        <span className="ml-1 text-[10px] text-accent font-semibold">RET</span>
+                        <span className="ml-1 text-[10px] text-amber-600 font-semibold">RET</span>
                       )}
                     </td>
                     <td className="text-right py-1.5 px-2 tabular-nums">{row.employmentIncome > 0 ? fmt(row.employmentIncome) : '—'}</td>
@@ -465,7 +465,7 @@ export default function PlanReport() {
         {/* Tax Strategy */}
         <Section title="Tax Planning Strategy">
           {generateTaxSection(client, metrics).map((p, i) => (
-            <p key={i} className="text-sm text-text-primary leading-relaxed mb-3">
+            <p key={i} className="text-sm text-slate-800 leading-relaxed mb-3">
               {p}
             </p>
           ))}
@@ -474,7 +474,7 @@ export default function PlanReport() {
         {/* Insurance Review */}
         <Section title="Insurance Review">
           {generateInsuranceSection(client).map((p, i) => (
-            <p key={i} className="text-sm text-text-primary leading-relaxed mb-3">
+            <p key={i} className="text-sm text-slate-800 leading-relaxed mb-3">
               {p}
             </p>
           ))}
@@ -483,7 +483,7 @@ export default function PlanReport() {
         {/* Estate Planning */}
         <Section title="Estate Planning">
           {generateEstateSection(client, projections).map((p, i) => (
-            <p key={i} className="text-sm text-text-primary leading-relaxed mb-3">
+            <p key={i} className="text-sm text-slate-800 leading-relaxed mb-3">
               {p}
             </p>
           ))}
@@ -496,9 +496,9 @@ export default function PlanReport() {
               {client.actionItems
                 .filter((a) => !a.completed)
                 .map((item) => (
-                  <li key={item.id} className="text-sm text-text-primary">
+                  <li key={item.id} className="text-sm text-slate-800">
                     {item.text}
-                    <span className="ml-2 text-xs text-text-tertiary">({item.category})</span>
+                    <span className="ml-2 text-xs text-slate-400">({item.category})</span>
                   </li>
                 ))}
             </ol>
@@ -508,15 +508,15 @@ export default function PlanReport() {
         {/* Advisor Notes */}
         {client.advisorNotes && (
           <Section title="Advisor Notes">
-            <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
               {client.advisorNotes}
             </p>
           </Section>
         )}
 
         {/* Disclaimer */}
-        <footer className="border-t-2 border-navy pt-4 mt-8">
-          <p className="text-[10px] text-text-tertiary leading-relaxed">
+        <footer className="border-t-2 border-slate-800 pt-4 mt-8">
+          <p className="text-[10px] text-slate-400 leading-relaxed">
             <strong>Disclaimer:</strong> This financial plan is based on the information provided and current assumptions
             regarding tax rates, government benefits, and investment returns. Actual results will vary based on market
             conditions, legislative changes, and personal circumstances. This plan does not constitute financial, tax,
@@ -525,7 +525,7 @@ export default function PlanReport() {
             estimates based on 2025 rates and may change. Tax calculations are simplified and do not account for all
             credits, deductions, or provincial surtaxes.
           </p>
-          <p className="text-[10px] text-text-tertiary mt-2">
+          <p className="text-[10px] text-slate-400 mt-2">
             Generated by {practiceSettings.firmName} &mdash; {new Date().toLocaleDateString('en-CA')}
           </p>
         </footer>
@@ -541,7 +541,7 @@ export default function PlanReport() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="print:break-inside-avoid">
-      <h2 className="font-serif text-lg text-navy tracking-wide border-b border-card-border pb-2 mb-4">
+      <h2 className="text-lg font-semibold text-slate-800 tracking-wide border-b border-gray-200 pb-2 mb-4">
         {title}
       </h2>
       {children}
@@ -552,10 +552,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function SnapshotItem({ label, value, small }: { label: string; value: string; small?: boolean }) {
   return (
     <div>
-      <p className={`text-text-tertiary tracking-wider uppercase ${small ? 'text-[10px]' : 'text-[11px]'}`}>
+      <p className={`text-slate-400 tracking-wider uppercase ${small ? 'text-[10px]' : 'text-[11px]'}`}>
         {label}
       </p>
-      <p className={`tabular-nums text-text-primary ${small ? 'text-sm' : 'text-base font-medium'}`}>
+      <p className={`tabular-nums text-slate-800 ${small ? 'text-sm' : 'text-base font-medium'}`}>
         {value}
       </p>
     </div>
@@ -581,9 +581,9 @@ function MetricCard({
           : 'border-l-card-border';
 
   return (
-    <div className={`border border-card-border rounded-lg p-3 border-l-4 ${borderColor}`}>
-      <p className="text-[10px] text-text-tertiary tracking-wider uppercase">{label}</p>
-      <p className="text-base font-semibold tabular-nums text-text-primary mt-0.5">{value}</p>
+    <div className={`border border-gray-200 rounded-lg p-3 border-l-4 ${borderColor}`}>
+      <p className="text-[10px] text-slate-400 tracking-wider uppercase">{label}</p>
+      <p className="text-base font-semibold tabular-nums text-slate-800 mt-0.5">{value}</p>
     </div>
   );
 }

@@ -29,7 +29,7 @@ export function Toggle({
           {label}
         </label>
         {description && (
-          <p className="mt-0.5 text-sm text-text-secondary">{description}</p>
+          <p className="mt-0.5 text-sm text-slate-500">{description}</p>
         )}
       </div>
 

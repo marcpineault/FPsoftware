@@ -51,9 +51,9 @@ function CalcInput({
 }) {
   return (
     <div>
-      <label className="block text-xs text-text-secondary mb-1">{label}</label>
+      <label className="block text-xs text-slate-500 mb-1">{label}</label>
       <div className="flex items-center gap-1">
-        {prefix && <span className="text-xs text-text-tertiary">{prefix}</span>}
+        {prefix && <span className="text-xs text-slate-400">{prefix}</span>}
         <input
           type="number"
           value={value}
@@ -61,9 +61,9 @@ function CalcInput({
           step={step}
           min={min}
           max={max}
-          className="w-full rounded-lg border border-card-border bg-white px-3 py-2 text-sm text-text-primary tabular-nums focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none"
+          className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-800 tabular-nums focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none"
         />
-        {suffix && <span className="text-xs text-text-tertiary">{suffix}</span>}
+        {suffix && <span className="text-xs text-slate-400">{suffix}</span>}
       </div>
     </div>
   );
@@ -71,7 +71,7 @@ function CalcInput({
 
 function ResultRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`flex items-baseline justify-between py-1.5 ${highlight ? 'font-semibold text-text-primary' : 'text-text-secondary'}`}>
+    <div className={`flex items-baseline justify-between py-1.5 ${highlight ? 'font-semibold text-slate-800' : 'text-slate-500'}`}>
       <span className="text-sm">{label}</span>
       <span className="text-sm tabular-nums">{value}</span>
     </div>
@@ -111,7 +111,7 @@ function CompoundGrowthCalc() {
         <CalcInput label="Return Rate" value={rate} onChange={setRate} prefix="" suffix="%" step={0.1} />
         <CalcInput label="Years" value={years} onChange={setYears} prefix="" suffix="yrs" min={1} max={50} />
       </div>
-      <div className="border-t border-card-border pt-3">
+      <div className="border-t border-gray-200 pt-3">
         <ResultRow label="Future Value" value={fmt(result.futureValue)} highlight />
         <ResultRow label="Total Contributions" value={fmt(result.totalContributions)} />
         <ResultRow label="Investment Growth" value={fmt(result.totalGrowth)} />
@@ -153,7 +153,7 @@ function MortgageCalc() {
         <CalcInput label="Interest Rate" value={rate} onChange={setRate} prefix="" suffix="%" step={0.05} />
         <CalcInput label="Amortization" value={amort} onChange={setAmort} prefix="" suffix="yrs" min={1} max={30} />
       </div>
-      <div className="border-t border-card-border pt-3">
+      <div className="border-t border-gray-200 pt-3">
         <ResultRow label="Monthly Payment" value={fmtDetailed(result.monthly)} highlight />
         <ResultRow label="Total Paid Over Life" value={fmt(result.totalPaid)} />
         <ResultRow label="Total Interest" value={fmt(result.totalInterest)} />
@@ -209,7 +209,7 @@ function RrspVsTfsaCalc() {
         <CalcInput label="Return Rate" value={returnRate} onChange={setReturnRate} prefix="" suffix="%" step={0.1} />
         <CalcInput label="Years to Retirement" value={years} onChange={setYears} prefix="" suffix="yrs" />
       </div>
-      <div className="border-t border-card-border pt-3">
+      <div className="border-t border-gray-200 pt-3">
         <ResultRow label="RRSP (after withdrawal tax)" value={fmt(result.rrspAfterTax)} />
         <ResultRow label="RRSP + Refund Reinvested" value={fmt(result.rrspWithRefund)} highlight />
         <ResultRow label="TFSA (tax-free)" value={fmt(result.tfsaFuture)} highlight />
@@ -266,11 +266,11 @@ function TaxEstimator() {
       <div className="grid grid-cols-2 gap-3">
         <CalcInput label="Annual Income" value={income} onChange={setIncome} />
         <div>
-          <label className="block text-xs text-text-secondary mb-1">Province</label>
+          <label className="block text-xs text-slate-500 mb-1">Province</label>
           <select
             value={province}
             onChange={(e) => setProvince(e.target.value as CanadianProvince)}
-            className="w-full rounded-lg border border-card-border bg-white px-3 py-2 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none"
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none"
           >
             {Object.entries(PROVINCE_NAMES).map(([code, name]) => (
               <option key={code} value={code}>{name}</option>
@@ -278,7 +278,7 @@ function TaxEstimator() {
           </select>
         </div>
       </div>
-      <div className="border-t border-card-border pt-3">
+      <div className="border-t border-gray-200 pt-3">
         <ResultRow label="Federal Tax" value={fmt(result.fedTax)} />
         <ResultRow label="Provincial Tax" value={fmt(result.provTax)} />
         <ResultRow label="Total Tax" value={fmt(result.totalTax)} highlight />
@@ -308,7 +308,7 @@ export default function QuickCalc() {
   const [activeTab, setActiveTab] = useState<CalcTab>('growth');
 
   return (
-    <div className="min-h-screen bg-bg-secondary">
+    <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         {/* Header */}
         <div className="mb-6">
@@ -318,14 +318,14 @@ export default function QuickCalc() {
           >
             &larr; Back to Dashboard
           </button>
-          <h1 className="font-serif text-2xl text-text-primary tracking-wide">Quick Calculators</h1>
-          <p className="text-sm text-text-secondary mt-1">
+          <h1 className="font-serif text-2xl text-slate-800 tracking-wide">Quick Calculators</h1>
+          <p className="text-sm text-slate-500 mt-1">
             Financial planning tools for quick calculations
           </p>
         </div>
 
         {/* Tab bar */}
-        <div className="flex items-center gap-1 bg-white border border-card-border rounded-lg p-1 mb-6">
+        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 mb-6">
           {CALC_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -333,7 +333,7 @@ export default function QuickCalc() {
               className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'bg-navy text-white shadow-sm'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-bg-secondary'
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-gray-50'
               }`}
             >
               {tab.label}
@@ -342,7 +342,7 @@ export default function QuickCalc() {
         </div>
 
         {/* Calculator cards */}
-        <div className="rounded-xl border border-card-border bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           {activeTab === 'growth' && <CompoundGrowthCalc />}
           {activeTab === 'mortgage' && <MortgageCalc />}
           {activeTab === 'rrsp-tfsa' && <RrspVsTfsaCalc />}

@@ -188,8 +188,8 @@ function Card({
   className?: string;
 }) {
   return (
-    <div className={`rounded-xl border border-card-border bg-white p-6 shadow-sm ${className}`}>
-      {title && <h3 className="font-serif text-lg text-navy tracking-wide mb-4">{title}</h3>}
+    <div className={`rounded-xl border border-gray-200 bg-white p-6 shadow-sm ${className}`}>
+      {title && <h3 className="text-lg font-semibold text-slate-800 tracking-wide mb-4">{title}</h3>}
       {children}
     </div>
   );
@@ -210,7 +210,7 @@ interface ParamEditorProps {
 
 function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: ParamEditorProps) {
   const inputClass =
-    'w-full rounded-lg border border-card-border bg-white px-3 py-1.5 text-sm text-text-primary focus:border-navy focus:ring-2 focus:ring-navy/20 focus:outline-none transition-colors';
+    'w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-slate-800 focus:ring-2 focus:ring-navy/20 focus:outline-none transition-colors';
 
   const handleParamChange = (key: keyof ProjectionParams, value: number) => {
     onChange(index, {
@@ -219,7 +219,7 @@ function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: 
   };
 
   return (
-    <div className="rounded-lg border border-card-border p-4 space-y-3">
+    <div className="rounded-lg border border-gray-200 p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 flex-1">
           <span
@@ -230,14 +230,14 @@ function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: 
             type="text"
             value={scenario.name}
             onChange={(e) => onChange(index, { name: e.target.value })}
-            className="text-sm font-semibold text-navy bg-transparent border-none focus:outline-none focus:ring-0 w-full"
+            className="text-sm font-semibold text-slate-800 bg-transparent border-none focus:outline-none focus:ring-0 w-full"
             placeholder={`Scenario ${index + 1}`}
           />
         </div>
         {canRemove && (
           <button
             onClick={() => onRemove(index)}
-            className="text-text-secondary hover:text-negative transition-colors p-1"
+            className="text-slate-500 hover:text-negative transition-colors p-1"
             title="Remove scenario"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -249,7 +249,7 @@ function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: 
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="block text-xs text-text-secondary mb-1">Retirement Age</label>
+          <label className="block text-xs text-slate-500 mb-1">Retirement Age</label>
           <input
             type="number"
             min={55}
@@ -260,7 +260,7 @@ function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: 
           />
         </div>
         <div>
-          <label className="block text-xs text-text-secondary mb-1">CPP Start Age</label>
+          <label className="block text-xs text-slate-500 mb-1">CPP Start Age</label>
           <input
             type="number"
             min={60}
@@ -271,7 +271,7 @@ function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: 
           />
         </div>
         <div>
-          <label className="block text-xs text-text-secondary mb-1">OAS Start Age</label>
+          <label className="block text-xs text-slate-500 mb-1">OAS Start Age</label>
           <input
             type="number"
             min={65}
@@ -282,7 +282,7 @@ function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: 
           />
         </div>
         <div>
-          <label className="block text-xs text-text-secondary mb-1">Spending Rate</label>
+          <label className="block text-xs text-slate-500 mb-1">Spending Rate</label>
           <input
             type="number"
             min={50}
@@ -296,7 +296,7 @@ function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: 
           />
         </div>
         <div>
-          <label className="block text-xs text-text-secondary mb-1">RRSP Return %</label>
+          <label className="block text-xs text-slate-500 mb-1">RRSP Return %</label>
           <input
             type="number"
             min={0}
@@ -310,7 +310,7 @@ function ParamEditor({ scenario, index, onChange, onRemove, canRemove, color }: 
           />
         </div>
         <div>
-          <label className="block text-xs text-text-secondary mb-1">TFSA Return %</label>
+          <label className="block text-xs text-slate-500 mb-1">TFSA Return %</label>
           <input
             type="number"
             min={0}
@@ -359,14 +359,14 @@ function MetricRow({
   };
 
   return (
-    <tr className={highlight ? 'bg-bg-secondary/50' : ''}>
-      <td className="px-4 py-3 text-sm font-medium text-text-primary whitespace-nowrap">
+    <tr className={highlight ? 'bg-gray-50/50' : ''}>
+      <td className="px-4 py-3 text-sm font-medium text-slate-800 whitespace-nowrap">
         {label}
       </td>
       {values.map((v, i) => (
         <td
           key={i}
-          className="px-4 py-3 text-sm tabular-nums text-text-primary text-center"
+          className="px-4 py-3 text-sm tabular-nums text-slate-800 text-center"
         >
           {formatValue(v)}
         </td>
@@ -502,10 +502,10 @@ export function ScenarioComparison() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <p className="text-text-secondary text-sm">No client loaded.</p>
+          <p className="text-slate-500 text-sm">No client loaded.</p>
           <button
             onClick={() => navigate('/')}
-            className="mt-3 text-sm text-accent hover:text-accent-hover underline"
+            className="mt-3 text-sm text-amber-600 hover:text-amber-500 underline"
           >
             Return to dashboard
           </button>
@@ -522,12 +522,12 @@ export function ScenarioComparison() {
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="font-serif text-2xl text-navy tracking-wide">
+        <h1 className="text-2xl font-bold text-slate-800 tracking-wide">
           Scenario Comparison
         </h1>
-        <p className="mt-1 text-sm text-text-secondary">
+        <p className="mt-1 text-sm text-slate-500">
           Compare up to 3 scenarios side by side for{' '}
-          <span className="font-medium text-text-primary">
+          <span className="font-medium text-slate-800">
             {currentClient.firstName} {currentClient.lastName}
           </span>
           .
@@ -541,10 +541,10 @@ export function ScenarioComparison() {
             <button
               key={preset.label}
               onClick={() => handleApplyPreset(preset)}
-              className="text-left rounded-lg border border-card-border p-3 hover:border-navy hover:bg-bg-secondary/50 transition-colors"
+              className="text-left rounded-lg border border-gray-200 p-3 hover:border-slate-800 hover:bg-gray-50/50 transition-colors"
             >
-              <p className="text-sm font-medium text-navy">{preset.label}</p>
-              <p className="text-xs text-text-secondary mt-0.5">{preset.description}</p>
+              <p className="text-sm font-medium text-slate-800">{preset.label}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{preset.description}</p>
             </button>
           ))}
         </div>
@@ -568,7 +568,7 @@ export function ScenarioComparison() {
           {scenarios.length < 3 && (
             <button
               onClick={handleAddScenario}
-              className="rounded-lg border-2 border-dashed border-card-border p-4 flex items-center justify-center gap-2 text-sm text-text-secondary hover:border-navy hover:text-navy transition-colors min-h-[200px]"
+              className="rounded-lg border-2 border-dashed border-gray-200 p-4 flex items-center justify-center gap-2 text-sm text-slate-500 hover:border-slate-800 hover:text-slate-800 transition-colors min-h-[200px]"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
@@ -586,8 +586,8 @@ export function ScenarioComparison() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-card-border">
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                <tr className="border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     Metric
                   </th>
                   {results.map((r, i) => (
@@ -633,7 +633,7 @@ export function ScenarioComparison() {
                 <tr>
                   <td
                     colSpan={results.length + 1}
-                    className="px-4 py-2 bg-navy/5 text-xs font-semibold text-navy uppercase tracking-wider"
+                    className="px-4 py-2 bg-slate-800/5 text-xs font-semibold text-slate-800 uppercase tracking-wider"
                   >
                     Results
                   </td>
@@ -717,7 +717,7 @@ export function ScenarioComparison() {
               ))}
             </BarChart>
           </ResponsiveContainer>
-          <p className="text-xs text-text-secondary mt-2 text-center">
+          <p className="text-xs text-slate-500 mt-2 text-center">
             Income Replacement (%), Money Lasts Until (age), Lifetime Tax ($K), Surplus at 95 ($K)
           </p>
         </Card>
@@ -727,7 +727,7 @@ export function ScenarioComparison() {
       <div className="flex items-center justify-between pt-2 pb-4">
         <button
           onClick={() => navigate(`/client/${id}/projections`)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-card-border bg-white text-sm font-medium text-text-primary hover:bg-bg-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-slate-800 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path
@@ -743,7 +743,7 @@ export function ScenarioComparison() {
 
         <button
           onClick={() => navigate(`/client/${id}/summary`)}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent-hover transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
         >
           Next: Summary
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

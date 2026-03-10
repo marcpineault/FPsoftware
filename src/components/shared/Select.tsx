@@ -64,7 +64,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           {/* Custom chevron icon */}
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
             <svg
-              className="h-4 w-4 text-text-secondary"
+              className="h-4 w-4 text-slate-500"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -80,12 +80,12 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         </div>
 
         {error && (
-          <p id={`${selectId}-error`} className="mt-1 text-sm text-negative">
+          <p id={`${selectId}-error`} className="mt-1 text-sm text-red-600">
             {error}
           </p>
         )}
         {!error && hint && (
-          <p id={`${selectId}-hint`} className="mt-1 text-sm text-text-secondary">
+          <p id={`${selectId}-hint`} className="mt-1 text-sm text-slate-500">
             {hint}
           </p>
         )}

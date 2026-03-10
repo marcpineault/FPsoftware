@@ -41,7 +41,7 @@ function formatCurrency(n: number): string {
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { clients, loadClients, deleteClient, setCurrentClient } = useAppStore();
+  const { clients, loadClients, deleteClient, setCurrentClient, practiceSettings } = useAppStore();
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -179,7 +179,7 @@ export function Dashboard() {
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-accent-light to-accent flex items-center justify-center shadow-lg shadow-accent/20">
                   <span className="text-white font-serif text-lg font-bold leading-none">M</span>
                 </div>
-                <span className="text-[11px] text-white/30 tracking-[0.2em] uppercase">Meridian Financial Planning</span>
+                <span className="text-[11px] text-white/30 tracking-[0.2em] uppercase">{practiceSettings.firmName}</span>
               </div>
               <h1 className="font-serif text-3xl text-white tracking-wide">
                 Client Dashboard

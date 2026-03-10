@@ -1,6 +1,7 @@
 import { Outlet, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
+import SettingsPanel from './SettingsPanel';
 import { useClient } from '../../hooks/useClient';
 
 export default function AppLayout() {
@@ -26,6 +27,9 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Settings slide-over */}
+      <SettingsPanel />
     </div>
   );
 }

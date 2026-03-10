@@ -1,7 +1,7 @@
 import { useAppStore } from '../../store';
 
 export default function TopBar() {
-  const { currentClient } = useAppStore();
+  const { currentClient, toggleSettings } = useAppStore();
 
   const clientName = currentClient
     ? `${currentClient.firstName} ${currentClient.lastName}`.trim()
@@ -37,6 +37,7 @@ export default function TopBar() {
 
       {/* Right: Subtle settings */}
       <button
+        onClick={toggleSettings}
         className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-all duration-200"
         aria-label="Settings"
       >

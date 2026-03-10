@@ -523,6 +523,12 @@ export function Profile() {
       return;
     }
 
+    // Sync target retirement age to projection params
+    if (field === 'targetRetirementAge' && typeof value === 'number' && value >= 40 && value <= 80) {
+      save({ [field]: value, projectionParams: { ...c.projectionParams, retirementAge: value } } as Partial<Client>);
+      return;
+    }
+
     save({ [field]: value } as Partial<Client>);
   };
 

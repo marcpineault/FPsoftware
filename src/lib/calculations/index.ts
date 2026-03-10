@@ -377,6 +377,10 @@ export function generateProjections(client: Client): ProjectionRow[] {
   // Pension income (DB or DC)
   const hasPension = client.pensionType !== 'none';
   const pensionAnnualBenefit = client.pensionDetails?.annualBenefitEstimate ?? 0;
+  // DC pension: grows pre-retirement, then rolls into RRSP at retirement
+  let dcPensionBalance = client.pensionType === 'dc' ? (client.pensionDetails?.currentBalance ?? 0) : 0;
+  const dcAnnualContribution = client.pensionType === 'dc' ? (client.pensionDetails?.annualContribution ?? 0) : 0;
+  let dcRolledOver = false;
 
   // Current annual spending
   const currentAnnualSpending = client.monthlyExpenses * 12;
@@ -438,9 +442,19 @@ export function generateProjections(client: Client): ProjectionRow[] {
     const spouseOasGross = spouseOasAnnual > 0 ? Math.round(spouseOasAnnual * inflationFactor) : 0;
 
     // Pension income (starts at retirement, inflation-indexed)
-    const pensionIncome = isRetired && hasPension
-      ? Math.round(pensionAnnualBenefit * inflationFactor)
-      : 0;
+    // DB pension: fixed benefit; DC pension: rolled into RRSP at retirement
+    let pensionIncome = 0;
+    if (isRetired && hasPension) {
+      if (client.pensionType === 'db') {
+        pensionIncome = Math.round(pensionAnnualBenefit * inflationFactor);
+      }
+      // DC: roll into RRSP at retirement (one-time transfer)
+      if (client.pensionType === 'dc' && !dcRolledOver && dcPensionBalance > 0) {
+        rrspBalance += dcPensionBalance;
+        dcPensionBalance = 0;
+        dcRolledOver = true;
+      }
+    }
 
     // --- Pre-retirement: grow balances with contributions ---
     if (!isRetired) {
@@ -449,6 +463,10 @@ export function generateProjections(client: Client): ProjectionRow[] {
       nonRegBalance = nonRegBalance * (1 + params.nonRegReturnRate);
       // Spousal RRSP grows at same rate (no additional contributions modeled separately)
       spousalRrspBalance = spousalRrspBalance * (1 + params.rrspReturnRate);
+      // DC pension: grow + employer/employee contributions
+      if (dcPensionBalance > 0 || dcAnnualContribution > 0) {
+        dcPensionBalance = dcPensionBalance * (1 + params.rrspReturnRate) + dcAnnualContribution;
+      }
       // ACB doesn't change with growth, only with new contributions
       // (assuming no additional non-reg contributions for simplicity)
 

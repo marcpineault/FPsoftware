@@ -137,7 +137,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
         ref={ref}
         inputMode="numeric"
         value={displayValue}
-        onChange={onChange}
+        onChange={onChange ?? (() => {})}
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholder="$0"

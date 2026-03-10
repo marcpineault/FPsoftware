@@ -131,6 +131,41 @@ const PRESETS: Preset[] = [
       { name: 'High (4%)', overrides: { inflationRate: 0.04 } },
     ],
   },
+  {
+    label: 'Market Downturn Stress Test',
+    description: 'Low returns simulating poor sequence of returns in early retirement',
+    scenarios: [
+      { name: 'Normal Returns', overrides: {} },
+      {
+        name: 'Poor Returns',
+        overrides: { rrspReturnRate: 0.02, tfsaReturnRate: 0.025, nonRegReturnRate: 0.015 },
+      },
+      {
+        name: 'Stagflation',
+        overrides: {
+          rrspReturnRate: 0.01, tfsaReturnRate: 0.015, nonRegReturnRate: 0.005,
+          inflationRate: 0.04,
+        },
+      },
+    ],
+  },
+  {
+    label: 'Pension Splitting On vs Off',
+    description: 'Impact of pension income splitting with spouse (T1032)',
+    scenarios: [
+      { name: 'With Splitting', overrides: { enablePensionSplitting: true } },
+      { name: 'Without Splitting', overrides: { enablePensionSplitting: false } },
+    ],
+  },
+  {
+    label: 'Early Retirement + Deferred Benefits',
+    description: 'Retire early but defer CPP and OAS to maximize government benefits',
+    scenarios: [
+      { name: 'Retire 60, CPP 65', overrides: { retirementAge: 60, cppStartAge: 65, oasStartAge: 65 } },
+      { name: 'Retire 60, CPP 70', overrides: { retirementAge: 60, cppStartAge: 70, oasStartAge: 70 } },
+      { name: 'Retire 65, CPP 70', overrides: { retirementAge: 65, cppStartAge: 70, oasStartAge: 70 } },
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------------ */

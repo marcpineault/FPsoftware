@@ -309,6 +309,59 @@ function calculateNonRegAnnualDistribution(balance: number): number {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Dividend Tax Credit (DTC) — Eligible vs Ineligible                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Eligible dividends (from public corps / CCPCs that paid high tax):
+ *   Gross-up: 38% → taxable amount = dividend × 1.38
+ *   Federal DTC: 15.0198% of taxable (grossed-up) amount
+ *
+ * Ineligible dividends (from CCPCs taxed at small business rate):
+ *   Gross-up: 15% → taxable amount = dividend × 1.15
+ *   Federal DTC: 9.0301% of taxable (grossed-up) amount
+ *
+ * Returns the net tax impact (positive = tax owed, negative = credit exceeds tax).
+ */
+function calculateDividendTaxImpact(
+  eligibleDividends: number,
+  _ineligibleDividends: number,
+  province: CanadianProvince,
+): { grossUp: number; federalDtc: number; provincialDtc: number; netTaxableIncrease: number } {
+  // Eligible
+  const eligGrossUp = eligibleDividends * 0.38;
+  const eligTaxable = eligibleDividends + eligGrossUp;
+  const eligFedDtc = eligTaxable * 0.150198;
+
+  // Ineligible
+  const ineligGrossUp = _ineligibleDividends * 0.15;
+  const ineligTaxable = _ineligibleDividends + ineligGrossUp;
+  const ineligFedDtc = ineligTaxable * 0.090301;
+
+  const totalGrossUp = eligGrossUp + ineligGrossUp;
+  const totalFedDtc = eligFedDtc + ineligFedDtc;
+
+  // Provincial DTC rates (simplified — most provinces mirror federal structure)
+  const provDtcRates: Partial<Record<CanadianProvince, { eligible: number; ineligible: number }>> = {
+    ON: { eligible: 0.10, ineligible: 0.0299 },
+    BC: { eligible: 0.12, ineligible: 0.0196 },
+    AB: { eligible: 0.10, ineligible: 0.0218 },
+    QC: { eligible: 0.117, ineligible: 0.0367 },
+    SK: { eligible: 0.11, ineligible: 0.02105 },
+    MB: { eligible: 0.08, ineligible: 0.007835 },
+  };
+  const provRates = provDtcRates[province] ?? { eligible: 0.10, ineligible: 0.025 };
+  const provincialDtc = eligTaxable * provRates.eligible + ineligTaxable * provRates.ineligible;
+
+  return {
+    grossUp: Math.round(totalGrossUp),
+    federalDtc: Math.round(totalFedDtc),
+    provincialDtc: Math.round(provincialDtc),
+    netTaxableIncrease: Math.round(totalGrossUp), // gross-up increases taxable income; credits reduce tax
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Pension Income Splitting                                           */
 /* ------------------------------------------------------------------ */
 
@@ -532,9 +585,11 @@ export function generateProjections(client: Client): ProjectionRow[] {
       }
 
       // ============================================================
-      // STEP 1: RRIF mandatory minimum (age > 71)
+      // STEP 1: RRIF minimum (mandatory after 71, voluntary from 65)
+      // Early RRIF conversion at 65 enables pension income splitting
       // ============================================================
-      const isRrif = age > RRSP_TO_RRIF_AGE;
+      const earlyRrifAge = params.earlyRrifConversion ? 65 : RRSP_TO_RRIF_AGE;
+      const isRrif = age > earlyRrifAge;
       if (isRrif && rrspBalance > 0) {
         rrifMinimumWithdrawal = calculateRrifMinimum(rrspBalance, age);
       }
@@ -663,13 +718,21 @@ export function generateProjections(client: Client): ProjectionRow[] {
       nonRegBalance / (1 + params.nonRegReturnRate) + nonRegWithdrawal
     ) : calculateNonRegAnnualDistribution(nonRegBalance);
 
+    // Dividend gross-up: portion of non-reg distribution that is eligible dividends
+    const eligibleDivPct = client.nonRegEligibleDividendPct ?? 0.40;
+    const nonRegDist = isRetired ? nonRegDistribution : calculateNonRegAnnualDistribution(nonRegBalance);
+    const eligibleDividendAmount = nonRegDist * eligibleDivPct;
+    const interestAmount = nonRegDist * (1 - eligibleDivPct);
+    const dtcResult = calculateDividendTaxImpact(eligibleDividendAmount, 0, client.province);
+
+    // Taxable income includes dividend gross-up (but DTC offsets tax later)
     const taxableIncome = employmentIncome
       + cpp
       + oasGross
       + pensionIncome
       + rrspWithdrawal
       + nonRegTaxableGain
-      + (isRetired ? nonRegDistribution : 0);
+      + (isRetired ? interestAmount + eligibleDividendAmount + dtcResult.grossUp : 0);
 
     // OAS clawback — based on net income (all taxable sources)
     const oasClawback = oasGross > 0 ? calculateOasClawback(taxableIncome, oasGross) : 0;
@@ -691,9 +754,9 @@ export function generateProjections(client: Client): ProjectionRow[] {
     let pensionSplitSavings: number | undefined;
     let incomeTax: number;
 
-    const isRrifAge = age > RRSP_TO_RRIF_AGE;
+    const isRrifForSplitting = age > (params.earlyRrifConversion ? 65 : RRSP_TO_RRIF_AGE);
     const eligiblePensionIncome = pensionIncome
-      + (isRetired && age >= 65 && isRrifAge ? rrspWithdrawal : 0);
+      + (isRetired && age >= 65 && isRrifForSplitting ? rrspWithdrawal : 0);
 
     if (
       isRetired &&
@@ -724,6 +787,11 @@ export function generateProjections(client: Client): ProjectionRow[] {
       }
     } else {
       incomeTax = estimateIncomeTax(taxableIncome, client.province);
+    }
+
+    // Apply dividend tax credits (reduce tax owed)
+    if (isRetired && (dtcResult.federalDtc > 0 || dtcResult.provincialDtc > 0)) {
+      incomeTax = Math.max(0, incomeTax - dtcResult.federalDtc - dtcResult.provincialDtc);
     }
 
     // Total cash received (OAS is reduced by clawback, GIS is tax-free)

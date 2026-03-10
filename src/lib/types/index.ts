@@ -60,6 +60,7 @@ export interface ProjectionParams {
   nonRegReturnRate: number;
   retirementSpendingRate: number;
   enablePensionSplitting: boolean;
+  earlyRrifConversion: boolean; // Convert RRSP to RRIF at 65 (enables pension splitting earlier)
 }
 
 export interface ActionItem {
@@ -122,6 +123,10 @@ export interface Client {
 
   // RRSP deduction room (from latest NOA)
   rrspDeductionRoom: number;
+
+  // Non-reg income composition (% of non-reg return that is eligible dividends vs interest)
+  nonRegEligibleDividendPct: number; // e.g. 0.40 = 40% of non-reg distributions are eligible dividends
+  tfsaContributionRoom: number; // Available TFSA contribution room
 
   // Recommendations
   actionItems: ActionItem[];
@@ -191,6 +196,7 @@ export const DEFAULT_PROJECTION_PARAMS: ProjectionParams = {
   nonRegReturnRate: 0.04,
   retirementSpendingRate: 0.80,
   enablePensionSplitting: true,
+  earlyRrifConversion: false,
 };
 
 export function createDefaultClient(id: string): Client {
@@ -216,6 +222,8 @@ export function createDefaultClient(id: string): Client {
     children: [],
     respAnnualContribution: 0,
     rrspDeductionRoom: 0,
+    nonRegEligibleDividendPct: 0.40,
+    tfsaContributionRoom: 7000,
     pensionType: 'none',
     primaryResidenceValue: 0,
     mortgageBalance: 0,

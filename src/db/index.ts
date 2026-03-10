@@ -69,4 +69,16 @@ db.version(7).stores({
   });
 });
 
+// Version 8: Added dividend composition, TFSA room, early RRIF conversion
+db.version(8).stores({
+  clients: 'id, firstName, lastName, updatedAt',
+}).upgrade((tx) => {
+  return tx.table('clients').toCollection().modify((client) => {
+    client.nonRegEligibleDividendPct ??= 0.40;
+    client.tfsaContributionRoom ??= 7000;
+    client.projectionParams ??= {};
+    client.projectionParams.earlyRrifConversion ??= false;
+  });
+});
+
 export { db };

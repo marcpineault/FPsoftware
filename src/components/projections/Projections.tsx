@@ -258,6 +258,7 @@ export function Projections() {
       nonRegReturnRate: 0.04,
       retirementSpendingRate: 0.80,
       enablePensionSplitting: true,
+      earlyRrifConversion: false,
     },
   );
 
@@ -374,7 +375,7 @@ export function Projections() {
 
   // Parameter update handler
   const handleParamChange = useCallback(
-    (key: keyof ProjectionParams, value: number) => {
+    (key: keyof ProjectionParams, value: number | boolean) => {
       setLocalParams((prev) => ({ ...prev, [key]: value }));
     },
     [],
@@ -690,6 +691,29 @@ export function Projections() {
                 onChange={(v) => handleParamChange('retirementSpendingRate', v / 100)}
               />
             </div>
+            {/* Strategy toggles */}
+            <div className="mt-4 pt-4 border-t border-card-border/60 flex flex-wrap gap-x-6 gap-y-2">
+              <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={localParams.enablePensionSplitting}
+                  onChange={(e) => handleParamChange('enablePensionSplitting', e.target.checked)}
+                  className="rounded border-card-border text-accent focus:ring-accent/20"
+                />
+                Pension Splitting
+              </label>
+              <label className="flex items-center gap-2 text-sm text-text-secondary cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={localParams.earlyRrifConversion ?? false}
+                  onChange={(e) => handleParamChange('earlyRrifConversion', e.target.checked)}
+                  className="rounded border-card-border text-accent focus:ring-accent/20"
+                />
+                Early RRIF at 65
+                <span className="text-xs text-text-tertiary">(enables splitting)</span>
+              </label>
+            </div>
+
             <div className="mt-4 pt-4 border-t border-card-border/60">
               <p className="text-xs text-text-tertiary tracking-wider uppercase mb-3">Contributions & Expenses</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">

@@ -779,14 +779,53 @@ export function Profile() {
 
       {/* Non-Registered Investments */}
       <Card title="Non-Registered Investments">
-        <Field label="Non-Registered Investment Balance">
-          <CurrencyInput
-            value={c.nonRegisteredInvestments}
-            onChange={(v) => handleField('nonRegisteredInvestments', v)}
-            onBlur={handleBlur}
-            placeholder="$25,000.00"
-          />
-        </Field>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="Non-Registered Investment Balance">
+            <CurrencyInput
+              value={c.nonRegisteredInvestments}
+              onChange={(v) => handleField('nonRegisteredInvestments', v)}
+              onBlur={handleBlur}
+              placeholder="$25,000.00"
+            />
+          </Field>
+          <Field label="Eligible Dividend % of Distributions">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={5}
+                value={Math.round((c.nonRegEligibleDividendPct ?? 0.40) * 100)}
+                onChange={(e) => handleField('nonRegEligibleDividendPct', (parseFloat(e.target.value) || 0) / 100)}
+                onBlur={handleBlur}
+                className="w-full rounded-lg border border-card-border bg-white px-3 py-2 text-sm text-text-primary focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none"
+              />
+              <span className="text-sm text-text-tertiary">%</span>
+            </div>
+          </Field>
+        </div>
+      </Card>
+
+      {/* TFSA Contribution Room */}
+      <Card title="TFSA Details">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="TFSA Balance">
+            <CurrencyInput
+              value={c.tfsaBalance}
+              onChange={(v) => handleField('tfsaBalance', v)}
+              onBlur={handleBlur}
+              placeholder="$50,000.00"
+            />
+          </Field>
+          <Field label="Available TFSA Contribution Room">
+            <CurrencyInput
+              value={c.tfsaContributionRoom ?? 7000}
+              onChange={(v) => handleField('tfsaContributionRoom', v)}
+              onBlur={handleBlur}
+              placeholder="$7,000.00"
+            />
+          </Field>
+        </div>
       </Card>
 
       {/* RESP / Education Savings */}

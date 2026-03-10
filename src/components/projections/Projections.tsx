@@ -241,7 +241,7 @@ export function Projections() {
   const { id } = useParams<{ id: string }>();
   const { currentClient, updateClient } = useAppStore();
 
-  const [view, setView] = useState<'table' | 'chart' | 'balances'>('table');
+  const [view, setView] = useState<'table' | 'chart' | 'balances' | 'income'>('table');
   const [paramsExpanded, setParamsExpanded] = useState(true);
 
   // Local params state for instant reactivity
@@ -322,6 +322,28 @@ export function Projections() {
         'Non-Reg': row.nonRegBalance ?? 0,
         'Net Worth': row.netWorth,
       })),
+    [projections],
+  );
+
+  // Income sources chart data (retirement years only)
+  const incomeChartData = useMemo(
+    () =>
+      projections
+        .filter((r) => r.isRetired)
+        .map((row) => ({
+          age: row.age,
+          'CPP': row.cpp,
+          'OAS': row.oas,
+          'GIS': row.gis ?? 0,
+          'Pension': row.pensionIncome,
+          'RRSP/RRIF': row.rrspRrifWithdrawals,
+          'TFSA': row.tfsaWithdrawals,
+          'Non-Reg': row.nonRegWithdrawals,
+          'Spouse CPP/OAS': (row.spouseCpp ?? 0) + (row.spouseOas ?? 0),
+          'Tax': -row.incomeTax,
+          'After-Tax': row.afterTaxIncome,
+          'Expenses': row.expenses,
+        })),
     [projections],
   );
 
@@ -586,6 +608,15 @@ export function Projections() {
                 onChange={(v) => handleParamChange('cppStartAge', v)}
               />
               <ParamSlider
+                label="Est. CPP at 65 ($/mo)"
+                value={localParams.estimatedCppMonthly}
+                min={0}
+                max={1400}
+                step={25}
+                formatValue={(v) => `$${v.toLocaleString()}`}
+                onChange={(v) => handleParamChange('estimatedCppMonthly', v)}
+              />
+              <ParamSlider
                 label="OAS Start Age"
                 value={localParams.oasStartAge}
                 min={65}
@@ -698,6 +729,23 @@ export function Projections() {
                 <path d="M9 2H13V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               Balances
+            </span>
+          </button>
+          <button
+            onClick={() => setView('income')}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              view === 'income'
+                ? 'bg-navy text-white shadow-sm'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect x="1" y="8" width="3" height="5" rx="0.5" fill="currentColor" opacity="0.4" />
+                <rect x="5.5" y="5" width="3" height="8" rx="0.5" fill="currentColor" opacity="0.6" />
+                <rect x="10" y="2" width="3" height="11" rx="0.5" fill="currentColor" opacity="0.8" />
+              </svg>
+              Income
             </span>
           </button>
         </div>
@@ -1016,6 +1064,98 @@ export function Projections() {
           ) : (
             <div className="flex items-center justify-center py-24 text-text-secondary text-sm">
               No projection data available. Please complete the client profile first.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* -------------------------------------------------------- */}
+      {/*  INCOME SOURCES CHART VIEW                                */}
+      {/* -------------------------------------------------------- */}
+
+      {view === 'income' && (
+        <div className="bg-white rounded-lg border border-card-border shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-text-primary mb-1">
+            Retirement Income Sources by Age
+          </h3>
+          <p className="text-xs text-text-secondary mb-6">
+            Stacked income sources with after-tax income and expense overlay. Shows retirement years only.
+          </p>
+
+          {incomeChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={420}>
+              <ComposedChart
+                data={incomeChartData}
+                margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis
+                  dataKey="age"
+                  tick={{ fontSize: 11, fill: '#6B7280' }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#E5E7EB' }}
+                  label={{
+                    value: 'Age',
+                    position: 'insideBottomRight',
+                    offset: -5,
+                    style: { fontSize: 11, fill: '#6B7280' },
+                  }}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: '#6B7280' }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v: number) => {
+                    const abs = Math.abs(v);
+                    if (abs >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+                    if (abs >= 1000) return `$${(v / 1000).toFixed(0)}K`;
+                    return `$${v}`;
+                  }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  verticalAlign="top"
+                  height={36}
+                  iconType="rect"
+                  iconSize={10}
+                  wrapperStyle={{ fontSize: 11 }}
+                />
+
+                {/* Stacked income sources */}
+                <Area type="monotone" dataKey="CPP" stackId="income" fill="#2563EB" stroke="#2563EB" fillOpacity={0.8} />
+                <Area type="monotone" dataKey="OAS" stackId="income" fill="#7C3AED" stroke="#7C3AED" fillOpacity={0.7} />
+                <Area type="monotone" dataKey="GIS" stackId="income" fill="#8B5CF6" stroke="#8B5CF6" fillOpacity={0.5} />
+                <Area type="monotone" dataKey="Pension" stackId="income" fill="#059669" stroke="#059669" fillOpacity={0.7} />
+                <Area type="monotone" dataKey="RRSP/RRIF" stackId="income" fill="#D97706" stroke="#D97706" fillOpacity={0.7} />
+                <Area type="monotone" dataKey="TFSA" stackId="income" fill="#0891B2" stroke="#0891B2" fillOpacity={0.7} />
+                <Area type="monotone" dataKey="Non-Reg" stackId="income" fill="#65A30D" stroke="#65A30D" fillOpacity={0.7} />
+                <Area type="monotone" dataKey="Spouse CPP/OAS" stackId="income" fill="#EC4899" stroke="#EC4899" fillOpacity={0.6} />
+
+                {/* Expenses line */}
+                <Line
+                  type="monotone"
+                  dataKey="Expenses"
+                  stroke="#EF4444"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  activeDot={{ r: 3, fill: '#EF4444' }}
+                />
+
+                {/* After-tax income line */}
+                <Line
+                  type="monotone"
+                  dataKey="After-Tax"
+                  stroke="#1B2A4A"
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 4, fill: '#1B2A4A' }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center py-24 text-text-secondary text-sm">
+              No retirement projection data available. Complete profile and set a retirement age.
             </div>
           )}
         </div>

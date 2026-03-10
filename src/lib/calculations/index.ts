@@ -379,6 +379,9 @@ export function generateProjections(client: Client): ProjectionRow[] {
   const spouseOasStartAge = hasSpouse ? (client.spouse!.oasStartAge ?? 65) : 65;
   const spouseCppAnnual = spouseCppMonthly > 0 ? calculateCppAnnual(spouseCppMonthly, spouseCppStartAge) : 0;
 
+  // Spousal RRSP (contributed by client, owned by spouse — taxed in spouse's hands on withdrawal)
+  let spousalRrspBalance = hasSpouse ? (client.spouse!.spousalRrspBalance ?? 0) : 0;
+
   for (let i = 0; i < totalYears; i++) {
     const year = currentYear + i;
     const age = currentAge + i;
@@ -428,6 +431,8 @@ export function generateProjections(client: Client): ProjectionRow[] {
       rrspBalance = rrspBalance * (1 + params.rrspReturnRate) + client.rrspAnnualContribution;
       tfsaBalance = tfsaBalance * (1 + params.tfsaReturnRate) + client.tfsaAnnualContribution;
       nonRegBalance = nonRegBalance * (1 + params.nonRegReturnRate);
+      // Spousal RRSP grows at same rate (no additional contributions modeled separately)
+      spousalRrspBalance = spousalRrspBalance * (1 + params.rrspReturnRate);
       // ACB doesn't change with growth, only with new contributions
       // (assuming no additional non-reg contributions for simplicity)
 
@@ -605,6 +610,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
       rrspBalance = rrspBalance * (1 + params.rrspReturnRate);
       tfsaBalance = tfsaBalance * (1 + params.tfsaReturnRate);
       nonRegBalance = nonRegBalance * (1 + params.nonRegReturnRate);
+      spousalRrspBalance = spousalRrspBalance * (1 + params.rrspReturnRate);
     }
 
     // Round withdrawals
@@ -704,7 +710,8 @@ export function generateProjections(client: Client): ProjectionRow[] {
     const mortgageRate = client.mortgageRate ?? 0.05;
     const mortgageAmort = client.mortgageAmortizationYears ?? 25;
     const mortgageRemaining = calculateMortgageRemaining(client.mortgageBalance, mortgageRate, mortgageAmort, i);
-    const netWorth = Math.round(rrspBalance) + Math.round(tfsaBalance)
+    const netWorth = Math.round(rrspBalance) + Math.round(spousalRrspBalance)
+      + Math.round(tfsaBalance)
       + Math.round(nonRegBalance) + Math.round(respBalance)
       + homeValue - mortgageRemaining
       - Math.max(0, client.otherDebts - (i * client.otherDebts / 10));
@@ -857,6 +864,58 @@ export function calculateKeyMetrics(
  * the basic exemption ($3,500) and the YMPE (~$71,300).
  * This is a simplified estimate — actual CPP depends on full contribution history.
  */
+/* ------------------------------------------------------------------ */
+/*  Estate Deemed Disposition on Death                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * At death (or second death if spousal rollover), CRA deems all assets
+ * disposed. RRSP/RRIF balances are fully included as income. Non-reg
+ * investments trigger capital gains on accrued gains. TFSA is tax-free.
+ * Primary residence is exempt (principal residence exemption).
+ *
+ * If there's a surviving spouse, RRSP/RRIF and TFSA can roll over tax-free.
+ * This function estimates the "terminal tax bill" at second death or single death.
+ */
+export function estimateEstateTaxBill(
+  rrspRrifBalance: number,
+  nonRegBalance: number,
+  nonRegAcb: number,
+  province: CanadianProvince,
+  hasSpouseRollover: boolean = false,
+): { totalTax: number; rrspTax: number; capitalGainsTax: number; effectiveRate: number } {
+  if (hasSpouseRollover) {
+    // Spouse rollover: no immediate tax on RRSP/RRIF or TFSA
+    // Only non-reg capital gains if not transferred to spouse at ACB
+    // In practice, most assets roll to spouse tax-free — return 0
+    return { totalTax: 0, rrspTax: 0, capitalGainsTax: 0, effectiveRate: 0 };
+  }
+
+  // RRSP/RRIF: fully taxable as income in year of death
+  const rrspTaxableIncome = rrspRrifBalance;
+
+  // Non-reg: capital gain at 50% inclusion
+  const capitalGain = Math.max(0, nonRegBalance - nonRegAcb);
+  const taxableCapitalGain = capitalGain * 0.5;
+
+  // Total taxable income on the terminal return
+  const totalTaxableIncome = rrspTaxableIncome + taxableCapitalGain;
+  const totalTax = estimateIncomeTax(totalTaxableIncome, province);
+
+  // Break it down
+  const rrspPortion = totalTaxableIncome > 0 ? rrspTaxableIncome / totalTaxableIncome : 0;
+  const rrspTax = Math.round(totalTax * rrspPortion);
+  const capitalGainsTax = totalTax - rrspTax;
+  const effectiveRate = totalTaxableIncome > 0 ? totalTax / (rrspRrifBalance + capitalGain) : 0;
+
+  return {
+    totalTax: Math.round(totalTax),
+    rrspTax,
+    capitalGainsTax,
+    effectiveRate: Math.round(effectiveRate * 10000) / 10000,
+  };
+}
+
 export function estimateCppMonthlyAt65(annualIncome: number): number {
   if (annualIncome <= CPP_BASIC_EXEMPTION) return 0;
   const pensionableEarnings = Math.min(annualIncome, CPP_YMPE_2025) - CPP_BASIC_EXEMPTION;

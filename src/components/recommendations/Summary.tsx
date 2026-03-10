@@ -3,7 +3,7 @@ import type { KeyboardEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { useAppStore } from '../../store';
-import { generateProjections, calculateKeyMetrics } from '../../lib/calculations';
+import { generateProjections, calculateKeyMetrics, estimateEstateTaxBill } from '../../lib/calculations';
 import { calculateProbateFee } from '../../lib/constants';
 import type {
   Client,
@@ -169,6 +169,26 @@ function generateFindings(
     if (probateFee > 500) {
       findings.push(
         `Estimated probate fees of ${formatCurrency(probateFee)} on a ${formatCurrency(lastRow.netWorth)} estate in ${client.province}. Joint ownership, beneficiary designations, and trusts can reduce or eliminate probate.`,
+      );
+    }
+  }
+
+  // 12b. Estate deemed disposition tax estimate
+  if (lastRow) {
+    const estateTax = estimateEstateTaxBill(
+      lastRow.rrspRrifBalance,
+      lastRow.nonRegBalance,
+      lastRow.nonRegAcb ?? lastRow.nonRegBalance * 0.5,
+      client.province,
+      client.hasSpouse,
+    );
+    if (estateTax.totalTax > 0) {
+      findings.push(
+        `Estate deemed disposition tax estimated at ${formatCurrency(estateTax.totalTax)} (RRSP/RRIF: ${formatCurrency(estateTax.rrspTax)}, capital gains: ${formatCurrency(estateTax.capitalGainsTax)}). Effective rate: ${(estateTax.effectiveRate * 100).toFixed(1)}%. Life insurance or gradual RRSP drawdowns can reduce this liability.`,
+      );
+    } else if (client.hasSpouse) {
+      findings.push(
+        `With spousal rollover, registered accounts transfer tax-free at first death. Plan for the terminal tax bill at second death.`,
       );
     }
   }

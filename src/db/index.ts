@@ -49,4 +49,15 @@ db.version(5).stores({
   });
 });
 
+// Version 6: Added spousal RRSP field
+db.version(6).stores({
+  clients: 'id, firstName, lastName, updatedAt',
+}).upgrade((tx) => {
+  return tx.table('clients').toCollection().modify((client) => {
+    if (client.spouse) {
+      client.spouse.spousalRrspBalance ??= 0;
+    }
+  });
+});
+
 export { db };

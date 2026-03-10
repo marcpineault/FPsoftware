@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppStore } from '../../store';
 import { PROVINCE_NAMES } from '../../lib/constants';
+import { estimateCppMonthlyAt65 } from '../../lib/calculations';
 import type {
   CanadianProvince,
   EmploymentStatus,
@@ -487,9 +488,18 @@ export function Profile() {
         cppStartAge: 65,
         oasStartAge: 65,
         rrspBalance: 0,
+        spousalRrspBalance: 0,
         tfsaBalance: 0,
       }), [spouseField]: value };
       save({ spouse: updatedSpouse });
+      return;
+    }
+
+    // Projection params
+    if (field.startsWith('projectionParams.')) {
+      const paramField = field.replace('projectionParams.', '');
+      const updatedParams = { ...c.projectionParams, [paramField]: value };
+      save({ projectionParams: updatedParams });
       return;
     }
 
@@ -603,12 +613,25 @@ export function Profile() {
               <p className="text-xs text-text-tertiary tracking-wider uppercase mb-3">Spouse Government Benefits &amp; Accounts</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Field label="Estimated CPP (monthly)">
-                  <CurrencyInput
-                    value={c.spouse?.estimatedCppMonthly ?? 800}
-                    onChange={(v) => handleField('spouse.estimatedCppMonthly', v)}
-                    onBlur={handleBlur}
-                    placeholder="$800.00"
-                  />
+                  <div className="flex gap-2">
+                    <CurrencyInput
+                      value={c.spouse?.estimatedCppMonthly ?? 800}
+                      onChange={(v) => handleField('spouse.estimatedCppMonthly', v)}
+                      onBlur={handleBlur}
+                      placeholder="$800.00"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const est = estimateCppMonthlyAt65(c.spouse?.annualIncome ?? 0);
+                        handleField('spouse.estimatedCppMonthly', est);
+                      }}
+                      className="shrink-0 px-3 py-2 rounded-lg bg-navy/10 text-navy text-xs font-medium hover:bg-navy/20 transition-colors"
+                      title="Estimate CPP based on spouse's income"
+                    >
+                      Est.
+                    </button>
+                  </div>
                 </Field>
                 <Field label="CPP Start Age">
                   <input
@@ -631,11 +654,19 @@ export function Profile() {
                   />
                 </Field>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                 <Field label="Spouse RRSP Balance">
                   <CurrencyInput
                     value={c.spouse?.rrspBalance ?? 0}
                     onChange={(v) => handleField('spouse.rrspBalance', v)}
+                    onBlur={handleBlur}
+                    placeholder="$0.00"
+                  />
+                </Field>
+                <Field label="Spousal RRSP (contributed by client)">
+                  <CurrencyInput
+                    value={c.spouse?.spousalRrspBalance ?? 0}
+                    onChange={(v) => handleField('spouse.spousalRrspBalance', v)}
                     onBlur={handleBlur}
                     placeholder="$0.00"
                   />
@@ -845,6 +876,58 @@ export function Profile() {
               </p>
             </div>
           )}
+        </div>
+      </Card>
+
+      {/* Government Benefits (CPP/OAS) */}
+      <Card title="Government Benefits">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Field label="Estimated CPP at 65 (monthly)">
+            <div className="flex gap-2">
+              <CurrencyInput
+                value={c.projectionParams.estimatedCppMonthly}
+                onChange={(v) => handleField('projectionParams.estimatedCppMonthly', v)}
+                onBlur={handleBlur}
+                placeholder="$1,000.00"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const est = estimateCppMonthlyAt65(c.annualIncome);
+                  handleField('projectionParams.estimatedCppMonthly', est);
+                }}
+                className="shrink-0 px-3 py-2 rounded-lg bg-navy/10 text-navy text-xs font-medium hover:bg-navy/20 transition-colors"
+                title="Estimate CPP based on current annual income"
+              >
+                Estimate
+              </button>
+            </div>
+            {c.annualIncome > 0 && (
+              <p className="text-xs text-text-tertiary mt-1">
+                Based on ${c.annualIncome.toLocaleString()} income: ~${estimateCppMonthlyAt65(c.annualIncome).toLocaleString()}/mo
+              </p>
+            )}
+          </Field>
+          <Field label="CPP Start Age">
+            <input
+              type="number"
+              min={60}
+              max={70}
+              value={c.projectionParams.cppStartAge}
+              onChange={(e) => handleField('projectionParams.cppStartAge', parseInt(e.target.value) || 65)}
+              className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-text-primary focus:border-navy focus:ring-1 focus:ring-navy/20"
+            />
+          </Field>
+          <Field label="OAS Start Age">
+            <input
+              type="number"
+              min={65}
+              max={70}
+              value={c.projectionParams.oasStartAge}
+              onChange={(e) => handleField('projectionParams.oasStartAge', parseInt(e.target.value) || 65)}
+              className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-text-primary focus:border-navy focus:ring-1 focus:ring-navy/20"
+            />
+          </Field>
         </div>
       </Card>
 

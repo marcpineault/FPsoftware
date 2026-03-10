@@ -283,7 +283,7 @@ export function Discovery() {
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-navy">Discovery &amp; Priorities</h1>
+        <h1 className="font-serif text-2xl text-navy tracking-wide">Discovery &amp; Priorities</h1>
         <p className="mt-1 text-text-secondary">
           Identify what matters most to{' '}
           <span className="font-medium text-text-primary">
@@ -427,7 +427,7 @@ export function Discovery() {
               <svg className="w-5 h-5 text-navy" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
               </svg>
-              <h2 className="text-lg font-semibold text-navy">Priority Ranking</h2>
+              <h2 className="font-serif text-lg text-navy tracking-wide">Priority Ranking</h2>
             </div>
             <p className="text-sm text-text-secondary mb-4">
               Use the arrows to reorder categories by importance. The highest priority should be at the top.

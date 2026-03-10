@@ -204,7 +204,8 @@ const TABLE_COLUMNS: TableColumn[] = [
   { key: 'oas', label: 'OAS', format: 'currency' },
   { key: 'pensionIncome', label: 'Pension', format: 'currency' },
   { key: 'rrspRrifWithdrawals', label: 'RRSP/RRIF', shortLabel: 'RRSP/RRIF', format: 'currency' },
-  { key: 'tfsaWithdrawals', label: 'TFSA', format: 'currency' },
+  { key: 'tfsaWithdrawals', label: 'TFSA W/D', shortLabel: 'TFSA W/D', format: 'currency' },
+  { key: 'nonRegWithdrawals', label: 'Non-Reg W/D', shortLabel: 'Non-Reg', format: 'currency' },
   { key: 'totalIncome', label: 'Total Income', shortLabel: 'Total Inc.', format: 'currency' },
   { key: 'incomeTax', label: 'Income Tax', shortLabel: 'Tax', format: 'currency' },
   { key: 'afterTaxIncome', label: 'After-Tax Income', shortLabel: 'After-Tax', format: 'currency' },
@@ -212,6 +213,7 @@ const TABLE_COLUMNS: TableColumn[] = [
   { key: 'netCashFlow', label: 'Net Cash Flow', shortLabel: 'Net CF', format: 'currency' },
   { key: 'rrspRrifBalance', label: 'RRSP/RRIF Bal.', shortLabel: 'RRSP Bal.', format: 'currency' },
   { key: 'tfsaBalance', label: 'TFSA Bal.', format: 'currency' },
+  { key: 'nonRegBalance', label: 'Non-Reg Bal.', shortLabel: 'Non-Reg Bal.', format: 'currency' },
   { key: 'netWorth', label: 'Net Worth', format: 'currency' },
 ];
 
@@ -226,6 +228,7 @@ const CHART_COLORS = {
   pension: '#7C3AED',       // violet
   rrsp: '#DC7C14',          // amber
   tfsa: '#2563EB',          // blue
+  nonReg: '#059669',        // emerald
   expenses: '#DC2626',      // red
 };
 
@@ -238,7 +241,7 @@ export function Projections() {
   const { id } = useParams<{ id: string }>();
   const { currentClient, updateClient } = useAppStore();
 
-  const [view, setView] = useState<'table' | 'chart'>('table');
+  const [view, setView] = useState<'table' | 'chart' | 'balances'>('table');
   const [paramsExpanded, setParamsExpanded] = useState(true);
 
   // Local params state for instant reactivity
@@ -253,6 +256,7 @@ export function Projections() {
       tfsaReturnRate: 0.05,
       nonRegReturnRate: 0.04,
       retirementSpendingRate: 0.80,
+      enablePensionSplitting: true,
     },
   );
 
@@ -302,7 +306,21 @@ export function Projections() {
         Pension: row.pensionIncome,
         'RRSP/RRIF': row.rrspRrifWithdrawals,
         TFSA: row.tfsaWithdrawals,
+        'Non-Reg': row.nonRegWithdrawals,
         Expenses: row.expenses,
+      })),
+    [projections],
+  );
+
+  // Balance chart data
+  const balanceChartData = useMemo(
+    () =>
+      projections.map((row) => ({
+        age: row.age,
+        'RRSP/RRIF': row.rrspRrifBalance,
+        'TFSA': row.tfsaBalance,
+        'Non-Reg': row.nonRegBalance ?? 0,
+        'Net Worth': row.netWorth,
       })),
     [projections],
   );
@@ -388,7 +406,7 @@ export function Projections() {
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-semibold text-text-primary">
+        <h1 className="font-serif text-2xl text-text-primary tracking-wide">
           Financial Projections
         </h1>
         <p className="mt-1 text-sm text-text-secondary">
@@ -404,9 +422,9 @@ export function Projections() {
       {/*  KEY METRICS CARDS                                        */}
       {/* -------------------------------------------------------- */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
         {/* Income Replacement Ratio */}
-        <div className="bg-white rounded-lg border border-card-border shadow-sm p-5">
+        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
           <p className="text-sm font-medium text-text-secondary">
             Income Replacement Ratio
           </p>
@@ -431,7 +449,7 @@ export function Projections() {
         </div>
 
         {/* Money Lasts Until Age */}
-        <div className="bg-white rounded-lg border border-card-border shadow-sm p-5">
+        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
           <p className="text-sm font-medium text-text-secondary">
             Money Lasts Until Age
           </p>
@@ -454,7 +472,7 @@ export function Projections() {
         </div>
 
         {/* Total Lifetime Tax */}
-        <div className="bg-white rounded-lg border border-card-border shadow-sm p-5">
+        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
           <p className="text-sm font-medium text-text-secondary">
             Total Lifetime Tax
           </p>
@@ -466,8 +484,40 @@ export function Projections() {
           </p>
         </div>
 
+        {/* Avg Effective Tax Rate */}
+        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
+          <p className="text-sm font-medium text-text-secondary">
+            Avg Effective Tax Rate (Retirement)
+          </p>
+          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-text-primary">
+            {formatPercent(metrics.avgEffectiveTaxRate ?? 0)}
+          </p>
+          <p className="mt-1 text-xs text-text-secondary">
+            Incl. OAS clawback
+          </p>
+        </div>
+
+        {/* OAS Clawback */}
+        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
+          <p className="text-sm font-medium text-text-secondary">
+            OAS Clawback
+          </p>
+          <p className={`mt-1.5 text-2xl font-semibold tabular-nums tracking-tight ${
+            (metrics.totalOasClawback ?? 0) > 0 ? 'text-negative' : 'text-positive'
+          }`}>
+            {(metrics.totalOasClawback ?? 0) > 0
+              ? formatCurrency(metrics.totalOasClawback ?? 0)
+              : 'None'}
+          </p>
+          <p className="mt-1 text-xs text-text-secondary">
+            {(metrics.oasClawbackYears ?? 0) > 0
+              ? `${metrics.oasClawbackYears} years affected`
+              : 'No clawback projected'}
+          </p>
+        </div>
+
         {/* CPP + OAS % */}
-        <div className="bg-white rounded-lg border border-card-border shadow-sm p-5">
+        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
           <p className="text-sm font-medium text-text-secondary">
             CPP + OAS % of Retirement Income
           </p>
@@ -634,6 +684,22 @@ export function Projections() {
               Chart
             </span>
           </button>
+          <button
+            onClick={() => setView('balances')}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              view === 'balances'
+                ? 'bg-navy text-white shadow-sm'
+                : 'text-text-secondary hover:text-text-primary'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M1 12L4.5 5L8 8L13 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M9 2H13V6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Balances
+            </span>
+          </button>
         </div>
 
         <p className="text-xs text-text-secondary">
@@ -651,11 +717,11 @@ export function Projections() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-navy text-white">
+                <tr className="table-header-refined text-white">
                   {TABLE_COLUMNS.map((col) => (
                     <th
                       key={col.key}
-                      className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap bg-navy"
+                      className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap table-header-refined"
                     >
                       <span className="hidden xl:inline">{col.label}</span>
                       <span className="xl:hidden">{col.shortLabel ?? col.label}</span>
@@ -829,6 +895,14 @@ export function Projections() {
                   stroke={CHART_COLORS.tfsa}
                   fillOpacity={0.7}
                 />
+                <Area
+                  type="monotone"
+                  dataKey="Non-Reg"
+                  stackId="income"
+                  fill={CHART_COLORS.nonReg}
+                  stroke={CHART_COLORS.nonReg}
+                  fillOpacity={0.7}
+                />
 
                 {/* Expense line overlay */}
                 <Line
@@ -839,6 +913,103 @@ export function Projections() {
                   strokeDasharray="6 3"
                   dot={false}
                   activeDot={{ r: 4, fill: CHART_COLORS.expenses }}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center py-24 text-text-secondary text-sm">
+              No projection data available. Please complete the client profile first.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* -------------------------------------------------------- */}
+      {/*  BALANCES CHART VIEW                                      */}
+      {/* -------------------------------------------------------- */}
+
+      {view === 'balances' && (
+        <div className="bg-white rounded-lg border border-card-border shadow-sm p-6">
+          <h3 className="text-sm font-semibold text-text-primary mb-1">
+            Investment Balances &amp; Net Worth Over Time
+          </h3>
+          <p className="text-xs text-text-secondary mb-6">
+            Stacked account balances with net worth overlay. Hover for details.
+          </p>
+
+          {balanceChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={420}>
+              <ComposedChart
+                data={balanceChartData}
+                margin={{ top: 10, right: 20, left: 20, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis
+                  dataKey="age"
+                  tick={{ fontSize: 11, fill: '#6B7280' }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#E5E7EB' }}
+                  label={{
+                    value: 'Age',
+                    position: 'insideBottomRight',
+                    offset: -5,
+                    style: { fontSize: 11, fill: '#6B7280' },
+                  }}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: '#6B7280' }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v: number) => {
+                    const abs = Math.abs(v);
+                    if (abs >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+                    if (abs >= 1000) return `$${(v / 1000).toFixed(0)}K`;
+                    return `$${v}`;
+                  }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend
+                  verticalAlign="top"
+                  height={36}
+                  iconType="rect"
+                  iconSize={10}
+                  wrapperStyle={{ fontSize: 11 }}
+                />
+
+                {/* Stacked areas: account balances */}
+                <Area
+                  type="monotone"
+                  dataKey="RRSP/RRIF"
+                  stackId="balances"
+                  fill="#7C3AED"
+                  stroke="#7C3AED"
+                  fillOpacity={0.7}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="TFSA"
+                  stackId="balances"
+                  fill="#2563EB"
+                  stroke="#2563EB"
+                  fillOpacity={0.7}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="Non-Reg"
+                  stackId="balances"
+                  fill="#059669"
+                  stroke="#059669"
+                  fillOpacity={0.7}
+                />
+
+                {/* Net Worth line overlay */}
+                <Line
+                  type="monotone"
+                  dataKey="Net Worth"
+                  stroke="#1B2A4A"
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 4, fill: '#1B2A4A' }}
                 />
               </ComposedChart>
             </ResponsiveContainer>

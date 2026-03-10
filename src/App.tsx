@@ -1,23 +1,40 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './components/layout';
 import { Dashboard } from './components/client/Dashboard';
-import { Discovery } from './components/discovery/Discovery';
-import { Profile } from './components/client/Profile';
-import { Projections } from './components/projections/Projections';
-import Summary from './components/recommendations/Summary';
+
+// Lazy-load heavy route components for code splitting
+const Discovery = lazy(() => import('./components/discovery/Discovery').then(m => ({ default: m.Discovery })));
+const Profile = lazy(() => import('./components/client/Profile').then(m => ({ default: m.Profile })));
+const Projections = lazy(() => import('./components/projections/Projections').then(m => ({ default: m.Projections })));
+const Summary = lazy(() => import('./components/recommendations/Summary'));
+const ScenarioComparison = lazy(() => import('./components/scenarios/ScenarioComparison').then(m => ({ default: m.ScenarioComparison })));
+const InsuranceNeeds = lazy(() => import('./components/insurance/InsuranceNeeds').then(m => ({ default: m.InsuranceNeeds })));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+    </div>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/client/:id/discovery" element={<Discovery />} />
-          <Route path="/client/:id/profile" element={<Profile />} />
-          <Route path="/client/:id/projections" element={<Projections />} />
-          <Route path="/client/:id/summary" element={<Summary />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/client/:id/discovery" element={<Discovery />} />
+            <Route path="/client/:id/profile" element={<Profile />} />
+            <Route path="/client/:id/projections" element={<Projections />} />
+            <Route path="/client/:id/scenarios" element={<ScenarioComparison />} />
+            <Route path="/client/:id/insurance" element={<InsuranceNeeds />} />
+            <Route path="/client/:id/summary" element={<Summary />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

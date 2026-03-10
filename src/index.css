@@ -1,21 +1,41 @@
 @import "tailwindcss";
 
 @theme {
-  --color-navy: #1B2A4A;
-  --color-navy-light: #2A3F6A;
-  --color-navy-dark: #111D35;
-  --color-accent: #2D5016;
-  --color-accent-light: #3A6B1D;
-  --color-accent-hover: #234012;
-  --color-bg: #FFFFFF;
-  --color-bg-secondary: #F8F9FA;
-  --color-card-border: #E5E7EB;
-  --color-text-primary: #1F2937;
-  --color-text-secondary: #6B7280;
-  --color-positive: #059669;
-  --color-negative: #DC2626;
-  --color-warning: #D97706;
-  --font-family-sans: "Inter", system-ui, -apple-system, sans-serif;
+  /* Navy — deep, warm navy with charcoal undertones */
+  --color-navy: #1a1f2e;
+  --color-navy-light: #252b3d;
+  --color-navy-dark: #12161f;
+
+  /* Gold accent — warm, authoritative, premium */
+  --color-accent: #b8860b;
+  --color-accent-light: #d4a017;
+  --color-accent-hover: #9a7209;
+  --color-accent-muted: #b8860b1a;
+
+  /* Backgrounds — warm cream instead of cool gray */
+  --color-bg: #fefcf9;
+  --color-bg-secondary: #f7f4ef;
+  --color-bg-tertiary: #eee9e0;
+
+  /* Card styling */
+  --color-card-bg: #ffffff;
+  --color-card-border: #e8e2d9;
+  --color-card-border-hover: #d4cdc2;
+
+  /* Text — warm grays */
+  --color-text-primary: #1a1f2e;
+  --color-text-secondary: #6b6560;
+  --color-text-tertiary: #9b958e;
+
+  /* Status colors — refined, not neon */
+  --color-positive: #2d7a4f;
+  --color-negative: #c23b22;
+  --color-warning: #c4841d;
+
+  /* Typography */
+  --font-family-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-family-serif: "DM Serif Display", Georgia, serif;
+  --font-family-mono: "JetBrains Mono", "SF Mono", monospace;
 }
 
 * {
@@ -28,6 +48,7 @@ html {
   font-family: var(--font-family-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
 body {
@@ -43,6 +64,77 @@ body {
 /* Tabular numbers for financial data */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+  font-family: var(--font-family-mono);
+}
+
+/* Serif headings utility */
+.font-serif {
+  font-family: var(--font-family-serif);
+}
+
+/* Subtle card entrance animation */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-enter {
+  animation: card-enter 0.4s ease-out both;
+}
+
+/* Stagger children */
+.stagger-children > * {
+  animation: card-enter 0.35s ease-out both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.09s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.12s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.18s; }
+.stagger-children > *:nth-child(7) { animation-delay: 0.21s; }
+.stagger-children > *:nth-child(8) { animation-delay: 0.24s; }
+.stagger-children > *:nth-child(9) { animation-delay: 0.27s; }
+
+/* Metric card hover lift */
+.metric-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -8px rgba(26, 31, 46, 0.12);
+}
+
+/* Sidebar background texture */
+.sidebar-bg {
+  background: linear-gradient(180deg, #1a1f2e 0%, #12161f 100%);
+  position: relative;
+}
+.sidebar-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(184, 134, 11, 0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Gold gradient text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #d4a017 0%, #b8860b 50%, #9a7209 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Warm divider */
+.divider-warm {
+  border-color: rgba(184, 134, 11, 0.15);
 }
 
 /* Print styles */
@@ -62,7 +154,7 @@ body {
   display: none;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar — warm and refined */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -71,9 +163,26 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #d4cdc2;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #9b958e;
+}
+
+/* Table header refinement */
+.table-header-refined {
+  background: linear-gradient(180deg, #1a1f2e 0%, #252b3d 100%);
+}
+
+/* Focus ring style */
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Input focus refinement */
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.1) !important;
 }

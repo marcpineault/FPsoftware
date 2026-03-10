@@ -271,7 +271,7 @@ function Card({
       className={`rounded-xl border border-card-border bg-white p-6 shadow-sm ${className}`}
     >
       {title && (
-        <h3 className="text-lg font-semibold text-navy mb-4">{title}</h3>
+        <h3 className="font-serif text-lg text-navy tracking-wide mb-4">{title}</h3>
       )}
       {children}
     </div>
@@ -483,6 +483,11 @@ export function Profile() {
         employmentStatus: 'employed' as EmploymentStatus,
         annualIncome: 0,
         targetRetirementAge: 65,
+        estimatedCppMonthly: 800,
+        cppStartAge: 65,
+        oasStartAge: 65,
+        rrspBalance: 0,
+        tfsaBalance: 0,
       }), [spouseField]: value };
       save({ spouse: updatedSpouse });
       return;
@@ -565,7 +570,7 @@ export function Profile() {
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-navy">
+            <h3 className="font-serif text-lg text-navy tracking-wide">
               Spouse / Partner
             </h3>
             <p className="text-sm text-text-secondary mt-0.5">
@@ -592,6 +597,59 @@ export function Profile() {
               onFieldChange={handleField}
               onBlur={handleBlur}
             />
+
+            {/* Spouse CPP/OAS & Registered Accounts */}
+            <div className="mt-6 pt-4 border-t border-card-border/60">
+              <p className="text-xs text-text-tertiary tracking-wider uppercase mb-3">Spouse Government Benefits &amp; Accounts</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Field label="Estimated CPP (monthly)">
+                  <CurrencyInput
+                    value={c.spouse?.estimatedCppMonthly ?? 800}
+                    onChange={(v) => handleField('spouse.estimatedCppMonthly', v)}
+                    onBlur={handleBlur}
+                    placeholder="$800.00"
+                  />
+                </Field>
+                <Field label="CPP Start Age">
+                  <input
+                    type="number"
+                    min={60}
+                    max={70}
+                    value={c.spouse?.cppStartAge ?? 65}
+                    onChange={(e) => handleField('spouse.cppStartAge', parseInt(e.target.value) || 65)}
+                    className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-text-primary focus:border-navy focus:ring-1 focus:ring-navy/20"
+                  />
+                </Field>
+                <Field label="OAS Start Age">
+                  <input
+                    type="number"
+                    min={65}
+                    max={70}
+                    value={c.spouse?.oasStartAge ?? 65}
+                    onChange={(e) => handleField('spouse.oasStartAge', parseInt(e.target.value) || 65)}
+                    className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-text-primary focus:border-navy focus:ring-1 focus:ring-navy/20"
+                  />
+                </Field>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                <Field label="Spouse RRSP Balance">
+                  <CurrencyInput
+                    value={c.spouse?.rrspBalance ?? 0}
+                    onChange={(v) => handleField('spouse.rrspBalance', v)}
+                    onBlur={handleBlur}
+                    placeholder="$0.00"
+                  />
+                </Field>
+                <Field label="Spouse TFSA Balance">
+                  <CurrencyInput
+                    value={c.spouse?.tfsaBalance ?? 0}
+                    onChange={(v) => handleField('spouse.tfsaBalance', v)}
+                    onBlur={handleBlur}
+                    placeholder="$0.00"
+                  />
+                </Field>
+              </div>
+            </div>
 
             <div className="mt-4">
               <label className="inline-flex items-center gap-2 cursor-pointer select-none">
@@ -655,6 +713,22 @@ export function Profile() {
               placeholder="$7,000.00"
             />
           </Field>
+          <Field label="FHSA Balance">
+            <CurrencyInput
+              value={c.fhsaBalance}
+              onChange={(v) => handleField('fhsaBalance', v)}
+              onBlur={handleBlur}
+              placeholder="$8,000.00"
+            />
+          </Field>
+          <Field label="FHSA Annual Contribution">
+            <CurrencyInput
+              value={c.fhsaAnnualContribution}
+              onChange={(v) => handleField('fhsaAnnualContribution', v)}
+              onBlur={handleBlur}
+              placeholder="$8,000.00"
+            />
+          </Field>
         </div>
       </Card>
 
@@ -668,6 +742,110 @@ export function Profile() {
             placeholder="$25,000.00"
           />
         </Field>
+      </Card>
+
+      {/* RESP / Education Savings */}
+      <Card title="RESP &amp; Education Savings">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Total RESP Balance (all children)">
+              <CurrencyInput
+                value={c.children.reduce((sum, ch) => sum + (ch.respBalance ?? 0), 0)}
+                onChange={(v) => {
+                  // Distribute evenly if multiple children, or set on first
+                  if (c.children.length > 0) {
+                    const perChild = v / c.children.length;
+                    const updated = c.children.map(ch => ({ ...ch, respBalance: perChild }));
+                    save({ children: updated });
+                  }
+                }}
+                onBlur={handleBlur}
+                placeholder="$10,000.00"
+              />
+            </Field>
+            <Field label="RESP Annual Contribution (total)">
+              <CurrencyInput
+                value={c.respAnnualContribution}
+                onChange={(v) => handleField('respAnnualContribution', v)}
+                onBlur={handleBlur}
+                placeholder="$2,500.00"
+              />
+            </Field>
+          </div>
+
+          {/* Children */}
+          <div className="pt-3 border-t border-card-border/60">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-text-tertiary tracking-wider uppercase">Children (RESP Beneficiaries)</p>
+              <button
+                type="button"
+                onClick={() => {
+                  const updated = [...c.children, { name: '', dateOfBirth: '', respBalance: 0 }];
+                  save({ children: updated });
+                }}
+                className="text-xs text-accent hover:text-accent-hover font-medium"
+              >
+                + Add Child
+              </button>
+            </div>
+            {c.children.length === 0 && (
+              <p className="text-sm text-text-tertiary italic">No children added. CESG matching requires at least one beneficiary.</p>
+            )}
+            {c.children.map((child, idx) => (
+              <div key={idx} className="flex items-end gap-3 mb-2">
+                <div className="flex-1">
+                  <label className="text-xs text-text-secondary">Name</label>
+                  <input
+                    type="text"
+                    value={child.name}
+                    onChange={(e) => {
+                      const updated = [...c.children];
+                      updated[idx] = { ...updated[idx], name: e.target.value };
+                      save({ children: updated });
+                    }}
+                    placeholder="Child's name"
+                    className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-text-primary focus:border-navy focus:ring-1 focus:ring-navy/20"
+                  />
+                </div>
+                <div className="w-40">
+                  <label className="text-xs text-text-secondary">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={child.dateOfBirth}
+                    onChange={(e) => {
+                      const updated = [...c.children];
+                      updated[idx] = { ...updated[idx], dateOfBirth: e.target.value };
+                      save({ children: updated });
+                    }}
+                    className="w-full rounded-lg border border-card-border px-3 py-2 text-sm text-text-primary focus:border-navy focus:ring-1 focus:ring-navy/20"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = c.children.filter((_, i) => i !== idx);
+                    save({ children: updated });
+                  }}
+                  className="p-2 text-text-tertiary hover:text-negative transition-colors"
+                  title="Remove child"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {c.respAnnualContribution > 0 && (
+            <div className="mt-2 p-3 rounded-lg bg-positive/5 border border-positive/20">
+              <p className="text-xs text-positive">
+                CESG: Government matches 20% of contributions up to $500/year per child ($7,200 lifetime max per child).
+                {c.children.length > 0 && ` Estimated annual CESG: $${Math.min(c.respAnnualContribution * 0.2 / Math.max(c.children.length, 1), 500) * Math.max(c.children.length, 1)}.`}
+              </p>
+            </div>
+          )}
+        </div>
       </Card>
 
       {/* Pension */}
@@ -824,7 +1002,7 @@ export function Profile() {
       <Card>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-semibold text-navy">Life Insurance</h3>
+            <h3 className="font-serif text-lg text-navy tracking-wide">Life Insurance</h3>
             <p className="text-sm text-text-secondary mt-0.5">
               Do you currently hold any life insurance?
             </p>
@@ -885,7 +1063,7 @@ export function Profile() {
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-navy">
+            <h3 className="font-serif text-lg text-navy tracking-wide">
               Disability Insurance
             </h3>
             <p className="text-sm text-text-secondary mt-0.5">
@@ -905,7 +1083,7 @@ export function Profile() {
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-navy">
+            <h3 className="font-serif text-lg text-navy tracking-wide">
               Critical Illness Insurance
             </h3>
             <p className="text-sm text-text-secondary mt-0.5">
@@ -1080,7 +1258,7 @@ export function Profile() {
     <div className="max-w-4xl mx-auto px-4 py-6">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-navy">Client Profile</h1>
+        <h1 className="font-serif text-2xl text-navy tracking-wide">Client Profile</h1>
         <p className="text-sm text-text-secondary mt-1">
           {c.firstName && c.lastName
             ? `${c.firstName} ${c.lastName}`

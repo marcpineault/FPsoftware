@@ -29,6 +29,16 @@ function formatDate(date: Date | string | undefined): string {
   });
 }
 
+function formatCurrency(n: number): string {
+  if (!n) return '--';
+  return new Intl.NumberFormat('en-CA', {
+    style: 'currency',
+    currency: 'CAD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
   const { clients, loadClients, deleteClient, setCurrentClient } = useAppStore();
@@ -53,7 +63,7 @@ export function Dashboard() {
       console.error('Failed to create client:', err);
       setIsCreating(false);
     }
-  }, [isCreating, navigate]);
+  }, [isCreating, navigate, setCurrentClient]);
 
   const handleDeleteClient = useCallback(
     async (id: string, name: string) => {
@@ -82,48 +92,75 @@ export function Dashboard() {
     [navigate]
   );
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
+  const completedPlans = clients.filter(c => c.projectionsViewed).length;
+  const totalAssets = clients.reduce((sum, c) =>
+    sum + (c.rrspBalance || 0) + (c.tfsaBalance || 0) + (c.nonRegisteredInvestments || 0), 0
+  );
 
   return (
     <div className="min-h-screen bg-bg-secondary">
-      {/* Header */}
-      <header className="bg-navy shadow-md">
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            Financial Planning Tool
-          </h1>
-          <p className="mt-1 text-base text-white/70">Client Dashboard</p>
+      {/* Hero header */}
+      <header className="bg-navy relative overflow-hidden">
+        {/* Subtle texture */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(184,134,11,0.06)_0%,transparent_60%)]" />
+        <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-accent-light to-accent flex items-center justify-center shadow-lg shadow-accent/20">
+                  <span className="text-white font-serif text-lg font-bold leading-none">M</span>
+                </div>
+                <span className="text-[11px] text-white/30 tracking-[0.2em] uppercase">Meridian Financial Planning</span>
+              </div>
+              <h1 className="font-serif text-3xl text-white tracking-wide">
+                Client Dashboard
+              </h1>
+              <p className="mt-2 text-sm text-white/50 font-light">
+                {new Date().toLocaleDateString('en-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+
+            {/* Quick stats */}
+            {clients.length > 0 && (
+              <div className="hidden sm:flex items-center gap-8">
+                <div className="text-right">
+                  <p className="text-[11px] text-white/30 tracking-wider uppercase">Clients</p>
+                  <p className="font-serif text-2xl text-white mt-0.5">{clients.length}</p>
+                </div>
+                <div className="w-px h-10 bg-white/10" />
+                <div className="text-right">
+                  <p className="text-[11px] text-white/30 tracking-wider uppercase">Plans Complete</p>
+                  <p className="font-serif text-2xl text-white mt-0.5">{completedPlans}</p>
+                </div>
+                {totalAssets > 0 && (
+                  <>
+                    <div className="w-px h-10 bg-white/10" />
+                    <div className="text-right">
+                      <p className="text-[11px] text-white/30 tracking-wider uppercase">AUM</p>
+                      <p className="font-serif text-2xl text-white mt-0.5">{formatCurrency(totalAssets)}</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Main content */}
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Toolbar */}
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-text-primary">
-            {isLoading
-              ? 'Loading clients...'
-              : `${clients.length} ${clients.length === 1 ? 'Client' : 'Clients'}`}
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-sm font-medium text-text-secondary tracking-wider uppercase">
+            {isLoading ? 'Loading...' : `${clients.length} ${clients.length === 1 ? 'Client' : 'Clients'}`}
           </h2>
           <button
             onClick={handleNewClient}
             disabled={isCreating}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-accent-hover hover:shadow-md focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                clipRule="evenodd"
-              />
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
             {isCreating ? 'Creating...' : 'New Client'}
           </button>
@@ -132,135 +169,121 @@ export function Dashboard() {
         {/* Loading state */}
         {isLoading && (
           <div className="flex items-center justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-navy border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
           </div>
         )}
 
         {/* Empty state */}
         {!isLoading && clients.length === 0 && (
-          <div className="rounded-lg border border-card-border bg-white px-6 py-16 text-center shadow-sm">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="mx-auto h-12 w-12 text-text-secondary/40"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-              />
-            </svg>
-            <h3 className="mt-4 text-lg font-semibold text-text-primary">
-              No clients yet
+          <div className="animate-card-enter rounded-xl border border-card-border bg-card-bg px-6 py-20 text-center shadow-sm">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-bg-secondary flex items-center justify-center mb-5">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="text-text-tertiary">
+                <circle cx="14" cy="10" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M5 26c0-5 4-9 9-9s9 4 9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </div>
+            <h3 className="font-serif text-xl text-text-primary">
+              Welcome to Meridian
             </h3>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-text-secondary">
-              Get started by creating your first client. You'll walk through
-              discovery, build their financial profile, and generate retirement
-              projections.
+            <p className="mx-auto mt-3 max-w-md text-sm text-text-secondary leading-relaxed">
+              Begin by creating your first client. You'll walk through discovery, build their financial
+              profile, generate retirement projections, and deliver a comprehensive plan.
             </p>
             <button
               onClick={handleNewClient}
               disabled={isCreating}
-              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-8 inline-flex items-center gap-2.5 rounded-lg bg-accent px-7 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-accent-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                  clipRule="evenodd"
-                />
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
               {isCreating ? 'Creating...' : 'Create Your First Client'}
             </button>
           </div>
         )}
 
-        {/* Client cards grid */}
+        {/* Client cards */}
         {!isLoading && clients.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 stagger-children">
             {clients.map((client) => {
               const fullName =
                 [client.firstName, client.lastName].filter(Boolean).join(' ') ||
                 'Unnamed Client';
               const age = calculateAge(client.dateOfBirth);
               const isDeleting = deletingId === client.id;
+              const totalSavings = (client.rrspBalance || 0) + (client.tfsaBalance || 0) + (client.nonRegisteredInvestments || 0);
+              const completedModules = [client.discoveryComplete, client.profileComplete, client.projectionsViewed].filter(Boolean).length;
 
               return (
                 <div
                   key={client.id}
-                  className="group relative rounded-lg border border-card-border bg-white shadow-sm transition-shadow hover:shadow-md"
+                  className="group relative rounded-xl border border-card-border bg-card-bg shadow-sm transition-all duration-200 hover:shadow-md hover:border-card-border-hover"
                 >
-                  {/* Clickable card body */}
                   <button
                     type="button"
                     onClick={() => handleResumeClient(client.id)}
-                    className="block w-full cursor-pointer p-5 text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent rounded-lg"
+                    className="block w-full cursor-pointer p-5 text-left focus:outline-none rounded-xl"
                   >
-                    {/* Name & age row */}
+                    {/* Name row */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <h3 className="truncate text-base font-semibold text-text-primary">
+                        <h3 className="font-serif text-lg text-text-primary truncate tracking-wide">
                           {fullName}
                         </h3>
-                        {age !== null && (
-                          <p className="mt-0.5 text-sm text-text-secondary">
-                            Age {age}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-2 mt-1">
+                          {age !== null && (
+                            <span className="text-xs text-text-tertiary">Age {age}</span>
+                          )}
+                          {age !== null && client.province && (
+                            <span className="text-xs text-text-tertiary/40">&middot;</span>
+                          )}
+                          {client.province && (
+                            <span className="text-xs text-text-tertiary">{client.province}</span>
+                          )}
+                        </div>
                       </div>
-                      {/* Resume chevron */}
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="mt-1 h-5 w-5 flex-shrink-0 text-text-secondary/40 transition-colors group-hover:text-accent"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        aria-hidden="true"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        className="mt-1.5 shrink-0 text-text-tertiary/40 transition-all duration-200 group-hover:text-accent group-hover:translate-x-0.5"
                       >
-                        <path
-                          fillRule="evenodd"
-                          d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                          clipRule="evenodd"
-                        />
+                        <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
 
-                    {/* Last updated */}
-                    <p className="mt-3 text-xs text-text-secondary">
-                      Last session:{' '}
-                      <span className="font-medium">
-                        {formatDate(client.updatedAt)}
-                      </span>
-                    </p>
+                    {/* Financial summary */}
+                    {totalSavings > 0 && (
+                      <div className="mt-4 pt-3 border-t border-card-border/60">
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-[11px] text-text-tertiary tracking-wider uppercase">Total Savings</span>
+                          <span className="tabular-nums text-sm font-medium text-text-primary">{formatCurrency(totalSavings)}</span>
+                        </div>
+                      </div>
+                    )}
 
-                    {/* Completion badges */}
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <CompletionBadge
-                        label="Discovery"
-                        complete={client.discoveryComplete}
-                      />
-                      <CompletionBadge
-                        label="Profile"
-                        complete={client.profileComplete}
-                      />
-                      <CompletionBadge
-                        label="Projections"
-                        complete={client.projectionsViewed}
-                      />
+                    {/* Footer: date + badges */}
+                    <div className="mt-3 flex items-center justify-between">
+                      <p className="text-[11px] text-text-tertiary">
+                        {formatDate(client.updatedAt)}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        {[0, 1, 2].map((i) => (
+                          <span
+                            key={i}
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              i < completedModules ? 'bg-positive' : 'bg-card-border'
+                            }`}
+                          />
+                        ))}
+                        <span className="text-[10px] text-text-tertiary ml-1">{completedModules}/3</span>
+                      </div>
                     </div>
                   </button>
 
-                  {/* Delete button – floats top-right corner, stops propagation */}
-                  <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
+                  {/* Delete button */}
+                  <div className="absolute right-2 top-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -271,24 +294,14 @@ export function Dashboard() {
                         );
                       }}
                       disabled={isDeleting}
-                      className="rounded p-1.5 text-text-secondary/50 transition-colors hover:bg-red-50 hover:text-negative focus:outline-none focus:ring-2 focus:ring-negative disabled:opacity-50"
+                      className="rounded-lg p-1.5 text-text-tertiary/50 transition-all duration-150 hover:bg-negative/10 hover:text-negative"
                       title="Delete client"
                     >
                       {isDeleting ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-negative border-t-transparent" />
+                        <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-negative border-t-transparent" />
                       ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <path d="M2.5 4h9M5 4V3a1 1 0 011-1h2a1 1 0 011 1v1m1.5 0v7a1.5 1.5 0 01-1.5 1.5H5A1.5 1.5 0 013.5 11V4h7z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </button>
@@ -300,58 +313,5 @@ export function Dashboard() {
         )}
       </main>
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
-
-function CompletionBadge({
-  label,
-  complete,
-}: {
-  label: string;
-  complete: boolean;
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        complete
-          ? 'bg-positive/10 text-positive'
-          : 'bg-bg-secondary text-text-secondary'
-      }`}
-    >
-      {complete ? (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-3 w-3"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            fillRule="evenodd"
-            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-            clipRule="evenodd"
-          />
-        </svg>
-      ) : (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-3 w-3"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            fillRule="evenodd"
-            d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.828a1 1 0 101.415-1.414L11 9.586V6z"
-            clipRule="evenodd"
-          />
-        </svg>
-      )}
-      {label}
-    </span>
   );
 }

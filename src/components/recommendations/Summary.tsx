@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { useAppStore } from '../../store';
 import { generateProjections, calculateKeyMetrics } from '../../lib/calculations';
+import { calculateProbateFee } from '../../lib/constants';
 import type {
   Client,
   ActionItem,
@@ -140,6 +141,71 @@ function generateFindings(
     );
   }
 
+  // 9. OAS clawback
+  if ((metrics.totalOasClawback ?? 0) > 0) {
+    findings.push(
+      `OAS clawback of ${formatCurrency(metrics.totalOasClawback ?? 0)} projected over ${metrics.oasClawbackYears ?? 0} years. Consider strategies to reduce taxable income below the $90,997 threshold.`,
+    );
+  }
+
+  // 10. Effective tax rate
+  if ((metrics.avgEffectiveTaxRate ?? 0) > 0.30) {
+    findings.push(
+      `Average effective tax rate of ${((metrics.avgEffectiveTaxRate ?? 0) * 100).toFixed(1)}% in retirement is high. Tax optimization through pension splitting, TFSA utilization, and withdrawal sequencing could reduce this.`,
+    );
+  }
+
+  // 11. TFSA maximization
+  if (client.tfsaAnnualContribution < 7000 && client.annualIncome > 0) {
+    findings.push(
+      `TFSA contributions of ${formatCurrency(client.tfsaAnnualContribution)}/year are below the $7,000 annual limit. Maximizing TFSA contributions provides tax-free retirement income and reduces future OAS clawback risk.`,
+    );
+  }
+
+  // 12. Estate probate fee estimate
+  const lastRow = projections[projections.length - 1];
+  if (lastRow && lastRow.netWorth > 100000) {
+    const probateFee = calculateProbateFee(client.province, lastRow.netWorth);
+    if (probateFee > 500) {
+      findings.push(
+        `Estimated probate fees of ${formatCurrency(probateFee)} on a ${formatCurrency(lastRow.netWorth)} estate in ${client.province}. Joint ownership, beneficiary designations, and trusts can reduce or eliminate probate.`,
+      );
+    }
+  }
+
+  // 13. FHSA utilization
+  if (client.fhsaBalance > 0 || client.fhsaAnnualContribution > 0) {
+    const yearsToRetirement = Math.max(0, client.projectionParams.retirementAge - (new Date().getFullYear() - new Date(client.dateOfBirth).getFullYear()));
+    const projectedFhsa = Math.min(40000, client.fhsaBalance + client.fhsaAnnualContribution * yearsToRetirement);
+    findings.push(
+      `FHSA balance will transfer to RRSP at retirement (projected ${formatCurrency(projectedFhsa)}). This transfer is tax-free and does not use RRSP room.`,
+    );
+  }
+
+  // 14. Spouse income splitting opportunity
+  if (client.hasSpouse && client.spouse && client.annualIncome > 100000) {
+    const spouseIncome = client.spouse.annualIncome;
+    if (spouseIncome < client.annualIncome * 0.5) {
+      findings.push(
+        `Significant income disparity with spouse — spousal RRSP contributions and pension splitting at retirement can substantially reduce household taxes.`,
+      );
+    }
+  }
+
+  // 15. RESP/CESG for families with children
+  if (client.children.length > 0) {
+    if (client.respAnnualContribution === 0) {
+      findings.push(
+        `${client.children.length} child${client.children.length > 1 ? 'ren' : ''} registered but no RESP contributions. Contributing $2,500/year per child qualifies for $500/year CESG match — free government money.`,
+      );
+    } else if (client.respAnnualContribution < client.children.length * 2500) {
+      const idealContrib = client.children.length * 2500;
+      findings.push(
+        `RESP contributions of ${formatCurrency(client.respAnnualContribution)}/year are below the ${formatCurrency(idealContrib)} needed to maximize CESG matching ($500/year per child).`,
+      );
+    }
+  }
+
   return findings;
 }
 
@@ -147,7 +213,7 @@ function generateFindings(
 // Default action items from gaps
 // ---------------------------------------------------------------------------
 
-function generateDefaultActionItems(client: Client): ActionItem[] {
+function generateDefaultActionItems(client: Client, metrics?: KeyMetrics): ActionItem[] {
   const items: ActionItem[] = [];
 
   if (!client.hasDisabilityInsurance) {
@@ -226,6 +292,24 @@ function generateDefaultActionItems(client: Client): ActionItem[] {
       text: 'Analyze optimal CPP start age \u2014 consider deferral to age 70 for higher benefits',
       completed: false,
       category: 'Retirement',
+    });
+  }
+
+  if (metrics && (metrics.totalOasClawback ?? 0) > 0) {
+    items.push({
+      id: uuidv4(),
+      text: 'Review income splitting and TFSA strategies to minimize OAS clawback',
+      completed: false,
+      category: 'Tax',
+    });
+  }
+
+  if (metrics && (metrics.avgEffectiveTaxRate ?? 0) > 0.25) {
+    items.push({
+      id: uuidv4(),
+      text: 'Consider tax-efficient withdrawal sequencing to reduce effective tax rate',
+      completed: false,
+      category: 'Tax',
     });
   }
 
@@ -689,7 +773,7 @@ export default function Summary() {
 
     // Merge existing action items with auto-generated defaults
     const existing = currentClient.actionItems || [];
-    const defaults = generateDefaultActionItems(currentClient);
+    const defaults = generateDefaultActionItems(currentClient, metrics);
 
     // Only add defaults that are not already represented
     const existingTexts = new Set(
@@ -701,7 +785,7 @@ export default function Summary() {
 
     setActionItems([...existing, ...mergedDefaults]);
     setInitialized(true);
-  }, [currentClient, initialized]);
+  }, [currentClient, initialized, metrics]);
 
   // Auto-save advisor notes (debounced)
   useEffect(() => {
@@ -826,7 +910,7 @@ export default function Summary() {
     <div className="mx-auto max-w-4xl space-y-8 px-4 py-8 sm:px-6">
       {/* Page header — print only */}
       <div className="print-only mb-6">
-        <h1 className="text-2xl font-bold text-navy">
+        <h1 className="font-serif text-2xl text-navy tracking-wide">
           Financial Plan Summary
         </h1>
         <p className="text-sm text-text-secondary">
@@ -837,7 +921,7 @@ export default function Summary() {
 
       {/* Page header — screen only */}
       <div className="no-print">
-        <h1 className="text-2xl font-bold tracking-tight text-navy">
+        <h1 className="font-serif text-2xl text-navy tracking-wide">
           Recommendations &amp; Summary
         </h1>
         <p className="mt-1 text-sm text-text-secondary">
@@ -850,7 +934,7 @@ export default function Summary() {
       {/* ------------------------------------------------------------------ */}
       <section>
         <div className="rounded-lg border border-card-border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-navy">
+          <h2 className="mb-4 font-serif text-lg text-navy tracking-wide">
             Priority Recap
           </h2>
 
@@ -917,11 +1001,96 @@ export default function Summary() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 2. KEY FINDINGS                                                     */}
+      {/* 2. KEY METRICS                                                      */}
       {/* ------------------------------------------------------------------ */}
       <section>
         <div className="rounded-lg border border-card-border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-navy">
+          <h2 className="mb-4 font-serif text-lg text-navy tracking-wide">
+            Key Metrics
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {/* Income Replacement Ratio */}
+            <div className="rounded-lg bg-bg-secondary px-4 py-3">
+              <p className="text-xs font-medium text-text-secondary">Income Replacement Ratio</p>
+              <p className={`mt-1 text-xl font-semibold tabular-nums ${
+                metrics.incomeReplacementRatio >= 0.7 ? 'text-positive' : metrics.incomeReplacementRatio >= 0.5 ? 'text-warning' : 'text-negative'
+              }`}>
+                {((metrics.incomeReplacementRatio) * 100).toFixed(1)}%
+              </p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">
+                {metrics.incomeReplacementRatio >= 0.7 ? 'On track' : 'Needs attention'}
+              </p>
+            </div>
+
+            {/* Money Lasts Until Age */}
+            <div className="rounded-lg bg-bg-secondary px-4 py-3">
+              <p className="text-xs font-medium text-text-secondary">Money Lasts Until Age</p>
+              <p className={`mt-1 text-xl font-semibold tabular-nums ${
+                metrics.moneyLastsUntilAge === null ? 'text-positive' : metrics.moneyLastsUntilAge >= 90 ? 'text-positive' : metrics.moneyLastsUntilAge >= 80 ? 'text-warning' : 'text-negative'
+              }`}>
+                {metrics.moneyLastsUntilAge === null ? '95+' : `${metrics.moneyLastsUntilAge}`}
+              </p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">
+                {metrics.moneyLastsUntilAge === null ? 'Surplus at 95' : `Depleted at ${metrics.moneyLastsUntilAge}`}
+              </p>
+            </div>
+
+            {/* Total Lifetime Tax */}
+            <div className="rounded-lg bg-bg-secondary px-4 py-3">
+              <p className="text-xs font-medium text-text-secondary">Total Lifetime Tax</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-text-primary">
+                {formatCurrency(metrics.totalLifetimeTax)}
+              </p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">Fed + provincial</p>
+            </div>
+
+            {/* Avg Effective Tax Rate */}
+            <div className="rounded-lg bg-bg-secondary px-4 py-3">
+              <p className="text-xs font-medium text-text-secondary">Avg Effective Tax Rate</p>
+              <p className={`mt-1 text-xl font-semibold tabular-nums ${
+                (metrics.avgEffectiveTaxRate ?? 0) > 0.30 ? 'text-negative' : 'text-text-primary'
+              }`}>
+                {((metrics.avgEffectiveTaxRate ?? 0) * 100).toFixed(1)}%
+              </p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">In retirement</p>
+            </div>
+
+            {/* OAS Clawback Total */}
+            <div className="rounded-lg bg-bg-secondary px-4 py-3">
+              <p className="text-xs font-medium text-text-secondary">OAS Clawback Total</p>
+              <p className={`mt-1 text-xl font-semibold tabular-nums ${
+                (metrics.totalOasClawback ?? 0) > 0 ? 'text-negative' : 'text-positive'
+              }`}>
+                {(metrics.totalOasClawback ?? 0) > 0 ? formatCurrency(metrics.totalOasClawback ?? 0) : 'None'}
+              </p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">
+                {(metrics.oasClawbackYears ?? 0) > 0 ? `${metrics.oasClawbackYears} years` : 'No clawback'}
+              </p>
+            </div>
+
+            {/* Surplus at 95 */}
+            <div className="rounded-lg bg-bg-secondary px-4 py-3">
+              <p className="text-xs font-medium text-text-secondary">Surplus at 95</p>
+              <p className={`mt-1 text-xl font-semibold tabular-nums ${
+                metrics.surplusAtAge95 !== null && metrics.surplusAtAge95 > 0 ? 'text-positive' : metrics.surplusAtAge95 !== null ? 'text-negative' : 'text-text-secondary'
+              }`}>
+                {metrics.surplusAtAge95 !== null ? formatCurrency(metrics.surplusAtAge95) : 'N/A'}
+              </p>
+              <p className="mt-0.5 text-[10px] text-text-secondary">
+                {metrics.surplusAtAge95 !== null && metrics.surplusAtAge95 > 0 ? 'Strong position' : metrics.surplusAtAge95 !== null ? 'Shortfall' : '--'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* 3. KEY FINDINGS                                                     */}
+      {/* ------------------------------------------------------------------ */}
+      <section>
+        <div className="rounded-lg border border-card-border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 font-serif text-lg text-navy tracking-wide">
             Key Findings
           </h2>
 
@@ -940,12 +1109,12 @@ export default function Summary() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 3. ACTION ITEMS CHECKLIST                                           */}
+      {/* 4. ACTION ITEMS CHECKLIST                                           */}
       {/* ------------------------------------------------------------------ */}
       <section>
         <div className="rounded-lg border border-card-border bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-navy">Action Items</h2>
+            <h2 className="font-serif text-lg text-navy tracking-wide">Action Items</h2>
             {totalCount > 0 && (
               <span className="text-sm text-text-secondary">
                 {completedCount} of {totalCount} complete
@@ -1022,12 +1191,12 @@ export default function Summary() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 4. ADVISOR NOTES                                                    */}
+      {/* 5. ADVISOR NOTES                                                    */}
       {/* ------------------------------------------------------------------ */}
       <section>
         <div className="rounded-lg border border-card-border bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-navy">Advisor Notes</h2>
+            <h2 className="font-serif text-lg text-navy tracking-wide">Advisor Notes</h2>
             <span className="no-print text-xs text-text-secondary">
               Auto-saves as you type
             </span>
@@ -1051,11 +1220,11 @@ export default function Summary() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 5. EXPORT SECTION                                                   */}
+      {/* 6. EXPORT SECTION                                                   */}
       {/* ------------------------------------------------------------------ */}
       <section className="no-print">
         <div className="rounded-lg border border-card-border bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-navy">Export</h2>
+          <h2 className="mb-4 font-serif text-lg text-navy tracking-wide">Export</h2>
 
           <div className="flex flex-wrap gap-3">
             <button

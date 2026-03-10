@@ -9,30 +9,29 @@ interface NavItem {
   label: string;
   path: string;
   status: 'complete' | 'viewed' | 'not-visited';
+  icon: React.ReactNode;
 }
 
-function StatusIndicator({ status }: { status: NavItem['status'] }) {
+function StatusDot({ status }: { status: NavItem['status'] }) {
   if (status === 'complete') {
     return (
-      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-positive text-white text-xs font-bold shrink-0">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-positive/20 text-positive shrink-0">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 5L4 7L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
     );
   }
-
   if (status === 'viewed') {
     return (
       <span className="flex items-center justify-center w-5 h-5 shrink-0">
-        <span className="w-2.5 h-2.5 rounded-full bg-accent-light" />
+        <span className="w-2 h-2 rounded-full bg-accent-light" />
       </span>
     );
   }
-
   return (
     <span className="flex items-center justify-center w-5 h-5 shrink-0">
-      <span className="w-2.5 h-2.5 rounded-full border-2 border-white/30" />
+      <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
     </span>
   );
 }
@@ -63,23 +62,69 @@ export default function Sidebar({ clientId }: SidebarProps) {
           label: 'Discovery',
           path: `/client/${clientId}/discovery`,
           status: currentClient!.discoveryComplete ? 'complete' : 'not-visited',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+              <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M8 2v2M8 12v2M2 8h2M12 8h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          ),
         },
         {
           label: 'Profile',
           path: `/client/${clientId}/profile`,
           status: currentClient!.profileComplete ? 'complete' : 'not-visited',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <circle cx="8" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M3 14c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          ),
         },
         {
           label: 'Projections',
           path: `/client/${clientId}/projections`,
-          status: currentClient!.projectionsViewed
-            ? 'viewed'
-            : 'not-visited',
+          status: currentClient!.projectionsViewed ? 'viewed' : 'not-visited',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <polyline points="2,12 5,7 8,9 11,4 14,6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <line x1="2" y1="14" x2="14" y2="14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          ),
+        },
+        {
+          label: 'Scenarios',
+          path: `/client/${clientId}/scenarios`,
+          status: 'not-visited',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="3" width="5" height="10" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="9" y="3" width="5" height="10" rx="1" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M4 6h1M4 8h1M4 10h1M11 6h1M11 8h1M11 10h1" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          ),
+        },
+        {
+          label: 'Insurance Analysis',
+          path: `/client/${clientId}/insurance`,
+          status: 'not-visited',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M8 2L3 4.5v4c0 3.5 2.5 5.5 5 6.5 2.5-1 5-3 5-6.5v-4L8 2z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+              <path d="M6 8l1.5 1.5L10 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ),
         },
         {
           label: 'Summary',
           path: `/client/${clientId}/summary`,
           status: 'not-visited',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <rect x="3" y="2" width="10" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+              <path d="M6 5h4M6 7.5h4M6 10h2.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+            </svg>
+          ),
         },
       ]
     : [];
@@ -92,44 +137,49 @@ export default function Sidebar({ clientId }: SidebarProps) {
   return (
     <aside
       className={`
-        flex flex-col h-full bg-navy text-white transition-all duration-300 no-print shrink-0
+        sidebar-bg flex flex-col h-full text-white transition-all duration-300 no-print shrink-0 relative
         ${sidebarCollapsed ? 'w-16' : 'w-64'}
       `}
     >
       {/* Collapse toggle */}
       <button
         onClick={toggleSidebar}
-        className="absolute top-4 right-0 translate-x-1/2 z-10 w-6 h-6 rounded-full bg-navy-light border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-navy-light transition-colors"
+        className="absolute top-4 right-0 translate-x-1/2 z-10 w-6 h-6 rounded-full bg-navy-light border border-white/[0.08] flex items-center justify-center text-white/40 hover:text-white/80 hover:border-white/20 transition-all duration-200"
         aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         <svg
-          width="14"
-          height="14"
-          viewBox="0 0 14 14"
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
           fill="none"
-          className={`transition-transform ${sidebarCollapsed ? 'rotate-180' : ''}`}
+          className={`transition-transform duration-200 ${sidebarCollapsed ? 'rotate-180' : ''}`}
         >
-          <path d="M8.5 3.5L5 7L8.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M7.5 3L4.5 6L7.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
 
-      {/* Top section: client info or tool name */}
-      <div className="px-4 pt-5 pb-4 border-b border-white/10">
+      {/* Client info or brand */}
+      <div className="px-4 pt-5 pb-4 border-b border-white/[0.06]">
         {hasClient && !sidebarCollapsed ? (
           <div>
-            <p className="text-sm font-semibold text-white truncate">
-              {clientName || 'Unnamed Client'}
+            <p className="font-serif text-[15px] text-white tracking-wide truncate">
+              {clientName || 'New Client'}
             </p>
             {age !== null && (
-              <p className="text-xs text-white/50 mt-0.5">Age {age}</p>
+              <p className="text-[11px] text-white/40 mt-0.5 tracking-wider uppercase">
+                Age {age} &middot; {currentClient!.province}
+              </p>
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center">
             {sidebarCollapsed ? (
-              <span className="text-lg font-bold text-accent-light mx-auto">FP</span>
+              <span className="font-serif text-lg text-accent-light">M</span>
             ) : (
-              <span className="text-sm font-bold tracking-wide text-white/90">Financial Planner</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-serif text-[15px] text-white">Meridian</span>
+                <span className="text-[10px] text-white/30 tracking-widest uppercase">FP</span>
+              </div>
             )}
           </div>
         )}
@@ -137,7 +187,7 @@ export default function Sidebar({ clientId }: SidebarProps) {
 
       {/* Navigation links */}
       {hasClient && !sidebarCollapsed && (
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" aria-label="Module navigation">
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" aria-label="Module navigation">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -145,83 +195,55 @@ export default function Sidebar({ clientId }: SidebarProps) {
                 key={item.path}
                 to={item.path}
                 className={`
-                  group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative
+                  group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 relative
                   ${isActive
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/70 hover:bg-white/5 hover:text-white'
+                    ? 'bg-white/[0.08] text-white'
+                    : 'text-white/50 hover:bg-white/[0.04] hover:text-white/80'
                   }
                 `}
               >
                 {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent-light" />
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-r-full bg-accent-light" />
                 )}
-                <StatusIndicator status={item.status} />
-                <span>{item.label}</span>
+                <span className={`shrink-0 ${isActive ? 'text-accent-light' : 'text-white/30 group-hover:text-white/50'}`}>
+                  {item.icon}
+                </span>
+                <span className="flex-1">{item.label}</span>
+                <StatusDot status={item.status} />
               </Link>
             );
           })}
         </nav>
       )}
 
-      {/* Spacer when collapsed or no client */}
       {(!hasClient || sidebarCollapsed) && <div className="flex-1" />}
 
-      {/* Quick actions */}
-      <div className="px-3 py-4 border-t border-white/10 space-y-1">
+      {/* Bottom actions */}
+      <div className="px-3 py-4 border-t border-white/[0.06] space-y-0.5">
         {hasClient && !sidebarCollapsed && (
-          <>
-            <button
-              onClick={() => {
-                /* Save session handled by auto-save / store.updateClient */
-              }}
-              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-                <path d="M13 14H3a1 1 0 01-1-1V3a1 1 0 011-1h7.586a1 1 0 01.707.293l2.414 2.414a1 1 0 01.293.707V13a1 1 0 01-1 1z" stroke="currentColor" strokeWidth="1.3" />
-                <path d="M5 14V9h6v5M5 2v3h4" stroke="currentColor" strokeWidth="1.3" />
-              </svg>
-              <span>Save session</span>
-            </button>
-
-            <button
-              onClick={() => window.print()}
-              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-                <path d="M4 6V2h8v4M4 12H2.5A1.5 1.5 0 011 10.5v-3A1.5 1.5 0 012.5 6h11A1.5 1.5 0 0115 7.5v3a1.5 1.5 0 01-1.5 1.5H12" stroke="currentColor" strokeWidth="1.3" />
-                <rect x="4" y="10" width="8" height="4" rx="0.5" stroke="currentColor" strokeWidth="1.3" />
-              </svg>
-              <span>Export / Print</span>
-            </button>
-          </>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-[13px] text-white/35 hover:bg-white/[0.04] hover:text-white/60 transition-all duration-150"
+          >
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
+              <path d="M4 5.5V1.5h7v4M4 11H2.75A1.25 1.25 0 011.5 9.75v-2.5A1.25 1.25 0 012.75 6h9.5a1.25 1.25 0 011.25 1.25v2.5A1.25 1.25 0 0112.25 11H11" stroke="currentColor" strokeWidth="1.1" />
+              <rect x="4" y="9" width="7" height="4.5" rx="0.5" stroke="currentColor" strokeWidth="1.1" />
+            </svg>
+            <span>Export / Print</span>
+          </button>
         )}
-
-        <button
-          onClick={() => navigate('/client/new')}
-          className={`
-            flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors
-            ${sidebarCollapsed ? 'justify-center' : ''}
-          `}
-          title="New client"
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.3" />
-            <path d="M8 5.5v5M5.5 8h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-          </svg>
-          {!sidebarCollapsed && <span>New client</span>}
-        </button>
 
         <button
           onClick={() => navigate('/')}
           className={`
-            flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors
+            flex items-center gap-3 w-full px-3 py-2 rounded-lg text-[13px] text-white/35 hover:bg-white/[0.04] hover:text-white/60 transition-all duration-150
             ${sidebarCollapsed ? 'justify-center' : ''}
           `}
-          title="Back to dashboard"
+          title="Dashboard"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0">
-            <path d="M2 8.5l6-5.5 6 5.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M3.5 7.5V13a1 1 0 001 1h2.25V11h2.5v3h2.25a1 1 0 001-1V7.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="shrink-0">
+            <path d="M2 7.25l5.5-5 5.5 5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3.5 6.5v5.5a1 1 0 001 1h2v-3h2v3h2a1 1 0 001-1V6.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           {!sidebarCollapsed && <span>Dashboard</span>}
         </button>

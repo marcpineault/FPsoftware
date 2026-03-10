@@ -8,50 +8,44 @@ export default function TopBar() {
     : '';
 
   return (
-    <header className="h-14 bg-navy flex items-center justify-between px-5 shrink-0 no-print border-b border-navy-dark">
-      {/* Left: Tool name / logo */}
-      <div className="flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-md bg-accent-light flex items-center justify-center">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M2 13V5l3-3h6l3 3v8a1 1 0 01-1 1H3a1 1 0 01-1-1z"
-              stroke="white"
-              strokeWidth="1.4"
-            />
-            <path d="M5 9h6M5 11.5h4" stroke="white" strokeWidth="1.2" strokeLinecap="round" />
-          </svg>
+    <header className="h-14 bg-navy flex items-center justify-between px-6 shrink-0 no-print border-b border-white/[0.06]">
+      {/* Left: Brand mark */}
+      <div className="flex items-center gap-3">
+        <div className="w-7 h-7 rounded-md bg-gradient-to-br from-accent-light to-accent flex items-center justify-center shadow-sm">
+          <span className="text-white font-serif text-sm font-bold leading-none">M</span>
         </div>
-        <span className="text-sm font-semibold text-white tracking-wide">
-          Financial Planning Tool
-        </span>
+        <div className="flex items-baseline gap-1.5">
+          <span className="font-serif text-[15px] text-white tracking-wide">
+            Meridian
+          </span>
+          <span className="text-[11px] text-white/40 font-light tracking-widest uppercase">
+            Financial Planning
+          </span>
+        </div>
       </div>
 
-      {/* Center: Current client + scenario */}
-      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 text-sm">
+      {/* Center: Current client context */}
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2.5 text-sm">
         {clientName && (
           <>
-            <span className="text-white/80 font-medium">{clientName}</span>
-            <span className="text-white/30">&middot;</span>
-            <span className="text-white/50">Base Scenario</span>
+            <span className="text-white/90 font-medium tracking-wide">{clientName}</span>
+            <span className="w-1 h-1 rounded-full bg-accent-light/60" />
+            <span className="text-white/40 text-xs tracking-wider uppercase">Base Scenario</span>
           </>
         )}
       </div>
 
-      {/* Right: Settings placeholder */}
+      {/* Right: Subtle settings */}
       <button
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/5 transition-all duration-200"
         aria-label="Settings"
       >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+          <circle cx="8.5" cy="8.5" r="2" stroke="currentColor" strokeWidth="1.2" />
           <path
-            d="M9 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z"
+            d="M14.2 10.6a1.1 1.1 0 00.22 1.21l.04.04a1.33 1.33 0 11-1.88 1.88l-.04-.04a1.1 1.1 0 00-1.21-.22 1.1 1.1 0 00-.66 1v.1a1.33 1.33 0 11-2.66 0v-.05A1.1 1.1 0 007.4 14.2a1.1 1.1 0 00-1.21.22l-.04.04a1.33 1.33 0 11-1.88-1.88l.04-.04a1.1 1.1 0 00.22-1.21 1.1 1.1 0 00-1-.66h-.1a1.33 1.33 0 010-2.66h.05A1.1 1.1 0 003.8 7.4a1.1 1.1 0 00-.22-1.21l-.04-.04A1.33 1.33 0 115.42 4.27l.04.04a1.1 1.1 0 001.21.22h.05a1.1 1.1 0 00.66-1v-.1a1.33 1.33 0 012.66 0v.05a1.1 1.1 0 00.66 1 1.1 1.1 0 001.21-.22l.04-.04a1.33 1.33 0 111.88 1.88l-.04.04a1.1 1.1 0 00-.22 1.21v.05a1.1 1.1 0 001 .66h.1a1.33 1.33 0 110 2.66h-.05a1.1 1.1 0 00-1 .66z"
             stroke="currentColor"
-            strokeWidth="1.3"
-          />
-          <path
-            d="M14.7 11.1a1.2 1.2 0 00.24 1.32l.04.04a1.455 1.455 0 11-2.058 2.058l-.04-.04a1.2 1.2 0 00-1.32-.24 1.2 1.2 0 00-.726 1.098v.114a1.455 1.455 0 11-2.91 0v-.06A1.2 1.2 0 007.1 14.7a1.2 1.2 0 00-1.32.24l-.04.04a1.455 1.455 0 11-2.058-2.058l.04-.04a1.2 1.2 0 00.24-1.32 1.2 1.2 0 00-1.098-.726H2.75a1.455 1.455 0 010-2.91h.06A1.2 1.2 0 003.5 7.1a1.2 1.2 0 00-.24-1.32l-.04-.04A1.455 1.455 0 115.278 3.68l.04.04a1.2 1.2 0 001.32.24h.06a1.2 1.2 0 00.726-1.098V2.75a1.455 1.455 0 012.91 0v.06a1.2 1.2 0 00.726 1.098 1.2 1.2 0 001.32-.24l.04-.04a1.455 1.455 0 112.058 2.058l-.04.04a1.2 1.2 0 00-.24 1.32v.06a1.2 1.2 0 001.098.726h.114a1.455 1.455 0 110 2.91h-.06a1.2 1.2 0 00-1.098.726z"
-            stroke="currentColor"
-            strokeWidth="1.1"
+            strokeWidth="1"
           />
         </svg>
       </button>

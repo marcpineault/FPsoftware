@@ -74,8 +74,49 @@ export const RRIF_MIN_WITHDRAWAL_RATES: Record<number, number> = {
   95: 0.2000,
 };
 
+// FHSA constants
+export const FHSA_ANNUAL_LIMIT = 8000;
+export const FHSA_LIFETIME_LIMIT = 40000;
+
 // TFSA constants
 export const TFSA_ANNUAL_ROOM = 7000;
+
+// RESP / CESG constants
+export const RESP_ANNUAL_CONTRIBUTION_MAX = 2500; // per child for CESG purposes
+export const RESP_LIFETIME_LIMIT = 50000; // per beneficiary
+export const CESG_RATE = 0.20; // 20% match
+export const CESG_ANNUAL_MAX = 500; // per beneficiary
+export const CESG_LIFETIME_MAX = 7200; // per beneficiary
+export const RESP_BENEFICIARY_MAX_AGE = 17; // CESG eligibility ends after 17
+
+// Probate fees by province (simplified schedules)
+// Returns fee based on estate value
+export function calculateProbateFee(province: string, estateValue: number): number {
+  if (estateValue <= 0) return 0;
+  switch (province) {
+    case 'ON': // Ontario: $5 per $1,000 for first $50K, then $15 per $1,000
+      if (estateValue <= 50000) return Math.round(estateValue / 1000 * 5);
+      return Math.round(250 + (estateValue - 50000) / 1000 * 15);
+    case 'BC': // BC: $0 for ≤$25K, $6/$1K for $25K-$50K, $14/$1K over $50K
+      if (estateValue <= 25000) return 0;
+      if (estateValue <= 50000) return Math.round((estateValue - 25000) / 1000 * 6);
+      return Math.round(150 + (estateValue - 50000) / 1000 * 14);
+    case 'AB': return 525; // Alberta: flat $525 max
+    case 'QC': return Math.min(estateValue * 0.005, 65); // Quebec: max $65
+    case 'SK': return Math.round(estateValue * 0.007); // Saskatchewan: $7 per $1,000
+    case 'MB': return Math.round(estateValue * 0.007); // Manitoba: $7 per $1,000
+    case 'NB': return Math.round(estateValue * 0.005); // New Brunswick: $5 per $1,000
+    case 'NS': // Nova Scotia: tiered schedule
+      if (estateValue <= 10000) return 85;
+      if (estateValue <= 25000) return 215;
+      if (estateValue <= 50000) return 360;
+      if (estateValue <= 100000) return 1002;
+      return Math.round(1002 + (estateValue - 100000) / 1000 * 16.95);
+    case 'NL': return Math.round(estateValue * 0.006); // Newfoundland: $6 per $1,000
+    case 'PE': return Math.round(estateValue * 0.004); // PEI: $4 per $1,000
+    default: return Math.round(estateValue * 0.005); // Territories: estimate
+  }
+}
 
 // Province display names
 export const PROVINCE_NAMES: Record<string, string> = {

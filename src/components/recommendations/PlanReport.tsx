@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
-import type { PracticeSettings } from '../../store';
 import { useClient } from '../../hooks/useClient';
 import {
   generateProjections,
   calculateKeyMetrics,
   estimateEstateTaxBill,
-  estimateCppMonthlyAt65,
   getMarginalTaxRate,
 } from '../../lib/calculations';
 import { calculateProbateFee, PROVINCE_NAMES } from '../../lib/constants';

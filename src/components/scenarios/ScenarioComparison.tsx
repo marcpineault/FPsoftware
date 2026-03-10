@@ -395,6 +395,7 @@ export function ScenarioComparison() {
     nonRegReturnRate: 0.04,
     retirementSpendingRate: 0.80,
     enablePensionSplitting: true,
+    earlyRrifConversion: false,
   };
 
   const [scenarios, setScenarios] = useState<ScenarioConfig[]>([

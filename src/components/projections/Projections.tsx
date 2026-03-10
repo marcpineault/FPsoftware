@@ -193,7 +193,7 @@ interface TableColumn {
   key: keyof ProjectionRow;
   label: string;
   shortLabel?: string;
-  format: 'currency' | 'number' | 'year';
+  format: 'currency' | 'number' | 'year' | 'percent';
 }
 
 const TABLE_COLUMNS: TableColumn[] = [
@@ -208,6 +208,7 @@ const TABLE_COLUMNS: TableColumn[] = [
   { key: 'nonRegWithdrawals', label: 'Non-Reg W/D', shortLabel: 'Non-Reg', format: 'currency' },
   { key: 'totalIncome', label: 'Total Income', shortLabel: 'Total Inc.', format: 'currency' },
   { key: 'incomeTax', label: 'Income Tax', shortLabel: 'Tax', format: 'currency' },
+  { key: 'marginalTaxRate', label: 'Marginal Rate', shortLabel: 'Marg.%', format: 'percent' },
   { key: 'afterTaxIncome', label: 'After-Tax Income', shortLabel: 'After-Tax', format: 'currency' },
   { key: 'expenses', label: 'Expenses', format: 'currency' },
   { key: 'netCashFlow', label: 'Net Cash Flow', shortLabel: 'Net CF', format: 'currency' },
@@ -804,6 +805,8 @@ export function Projections() {
                         let cellText: string;
                         if (col.format === 'currency') {
                           cellText = val === 0 ? '--' : formatCurrencyFull(val);
+                        } else if (col.format === 'percent') {
+                          cellText = val != null ? `${(val * 100).toFixed(1)}%` : '--';
                         } else if (col.format === 'year') {
                           cellText = String(val);
                         } else {

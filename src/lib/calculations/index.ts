@@ -748,6 +748,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
       netWorth: Math.round(netWorth),
       isRetired,
       effectiveTaxRate: Math.round(effectiveTaxRate * 10000) / 10000,
+      marginalTaxRate: getMarginalTaxRate(taxableIncome, client.province),
       pensionSplitSavings,
     });
   }
@@ -877,6 +878,43 @@ export function calculateKeyMetrics(
  * If there's a surviving spouse, RRSP/RRIF and TFSA can roll over tax-free.
  * This function estimates the "terminal tax bill" at second death or single death.
  */
+/* ------------------------------------------------------------------ */
+/*  CPP Survivor Benefit                                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * CPP survivor benefit calculation. If one spouse dies, the surviving
+ * spouse may receive a survivor's pension (up to a combined maximum
+ * of the CPP max). Under age 65: flat-rate + 37.5% of deceased's CPP.
+ * Age 65+: 60% of deceased's CPP (combined max = CPP max monthly).
+ */
+export function estimateCppSurvivorBenefit(
+  deceasedCppMonthly: number,
+  survivorAge: number,
+  survivorOwnCppMonthly: number,
+): number {
+  if (deceasedCppMonthly <= 0) return 0;
+
+  let survivorBenefit: number;
+  if (survivorAge >= 65) {
+    // Age 65+: 60% of deceased's CPP
+    survivorBenefit = deceasedCppMonthly * 0.60;
+  } else {
+    // Under 65: flat-rate portion ($217.99 approx) + 37.5% of deceased's CPP
+    const flatRate = 217.99;
+    survivorBenefit = flatRate + deceasedCppMonthly * 0.375;
+  }
+
+  // Combined survivor + own CPP cannot exceed CPP max
+  const combined = survivorOwnCppMonthly + survivorBenefit;
+  const maxCombined = CPP_MAX_MONTHLY_2025;
+  if (combined > maxCombined) {
+    survivorBenefit = Math.max(0, maxCombined - survivorOwnCppMonthly);
+  }
+
+  return Math.round(survivorBenefit * 100) / 100;
+}
+
 export function estimateEstateTaxBill(
   rrspRrifBalance: number,
   nonRegBalance: number,
@@ -914,6 +952,39 @@ export function estimateEstateTaxBill(
     capitalGainsTax,
     effectiveRate: Math.round(effectiveRate * 10000) / 10000,
   };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Marginal Tax Rate                                                   */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Calculate the combined federal + provincial marginal tax rate
+ * at a given income level. This tells you the tax on the next $1 earned.
+ */
+export function getMarginalTaxRate(taxableIncome: number, province: CanadianProvince): number {
+  if (taxableIncome <= 0) return 0;
+
+  // Federal marginal rate
+  let fedRate = 0;
+  for (const bracket of FEDERAL_TAX_BRACKETS) {
+    if (taxableIncome > bracket.min) {
+      fedRate = bracket.rate;
+    }
+  }
+
+  // Provincial marginal rate
+  let provRate = 0;
+  const provData = PROVINCIAL_TAX_DATA[province];
+  if (provData) {
+    for (const bracket of provData.brackets) {
+      if (taxableIncome > bracket.min) {
+        provRate = bracket.rate;
+      }
+    }
+  }
+
+  return Math.round((fedRate + provRate) * 10000) / 10000;
 }
 
 export function estimateCppMonthlyAt65(annualIncome: number): number {

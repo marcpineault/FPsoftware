@@ -254,12 +254,29 @@ export function Dashboard() {
                     </div>
 
                     {/* Financial summary */}
-                    {totalSavings > 0 && (
-                      <div className="mt-4 pt-3 border-t border-card-border/60">
-                        <div className="flex items-baseline justify-between">
-                          <span className="text-[11px] text-text-tertiary tracking-wider uppercase">Total Savings</span>
-                          <span className="tabular-nums text-sm font-medium text-text-primary">{formatCurrency(totalSavings)}</span>
-                        </div>
+                    {(totalSavings > 0 || client.annualIncome > 0) && (
+                      <div className="mt-4 pt-3 border-t border-card-border/60 space-y-1.5">
+                        {client.annualIncome > 0 && (
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-[11px] text-text-tertiary tracking-wider uppercase">Income</span>
+                            <span className="tabular-nums text-sm text-text-secondary">{formatCurrency(client.annualIncome)}</span>
+                          </div>
+                        )}
+                        {totalSavings > 0 && (
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-[11px] text-text-tertiary tracking-wider uppercase">Total Savings</span>
+                            <span className="tabular-nums text-sm font-medium text-text-primary">{formatCurrency(totalSavings)}</span>
+                          </div>
+                        )}
+                        {client.targetRetirementAge > 0 && age !== null && (
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-[11px] text-text-tertiary tracking-wider uppercase">Retirement</span>
+                            <span className="text-xs text-text-secondary">
+                              Age {client.targetRetirementAge}
+                              {client.targetRetirementAge > age && ` (${client.targetRetirementAge - age}y away)`}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     )}
 

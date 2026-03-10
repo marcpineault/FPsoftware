@@ -162,6 +162,7 @@ export interface ProjectionRow {
   netWorth: number;
   isRetired: boolean;
   effectiveTaxRate?: number;
+  marginalTaxRate?: number;
   pensionSplitSavings?: number;
 }
 

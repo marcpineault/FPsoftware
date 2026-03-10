@@ -146,7 +146,58 @@ body {
     display: block !important;
   }
   body {
-    background: white;
+    background: white !important;
+    color: #1a1a1a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* Hide sidebar, topbar in print */
+  aside, [role="complementary"], [role="banner"] {
+    display: none !important;
+  }
+  /* Make main content full width */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  /* Page setup */
+  @page {
+    margin: 1.5cm 2cm;
+    size: letter;
+  }
+  @page :first {
+    margin-top: 1cm;
+  }
+  /* Prevent orphaned headings */
+  h1, h2, h3 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  /* Keep tables and cards together */
+  table, .metric-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  /* Clean table borders */
+  table {
+    width: 100% !important;
+    font-size: 9pt !important;
+  }
+  td, th {
+    border-color: #ccc !important;
+    padding: 4px 8px !important;
+  }
+  /* Remove decorative elements */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  /* Ensure links show text not underlines */
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
   }
 }
 

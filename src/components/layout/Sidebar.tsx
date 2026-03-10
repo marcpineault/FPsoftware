@@ -126,6 +126,18 @@ export default function Sidebar({ clientId }: SidebarProps) {
             </svg>
           ),
         },
+        {
+          label: 'Plan Report',
+          path: `/client/${clientId}/report`,
+          status: 'not-visited',
+          icon: (
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M4 2h5l3 3v9a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+              <path d="M9 2v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 8h4M6 10.5h3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          ),
+        },
       ]
     : [];
 
@@ -185,9 +197,16 @@ export default function Sidebar({ clientId }: SidebarProps) {
         )}
       </div>
 
+      {/* Workflow hint */}
+      {hasClient && !sidebarCollapsed && (
+        <div className="px-4 py-2">
+          <p className="text-[10px] text-white/25 tracking-wider uppercase">Workflow</p>
+        </div>
+      )}
+
       {/* Navigation links */}
       {hasClient && !sidebarCollapsed && (
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto" aria-label="Module navigation">
+        <nav className="flex-1 px-3 pb-4 space-y-0.5 overflow-y-auto" aria-label="Module navigation">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (

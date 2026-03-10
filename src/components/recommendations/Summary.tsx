@@ -285,7 +285,8 @@ function generateFindings(
     );
   }
 
-  return findings;
+  // Limit to top 10 most relevant findings to avoid overwhelming the client
+  return findings.slice(0, 10);
 }
 
 // ---------------------------------------------------------------------------

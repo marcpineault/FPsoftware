@@ -197,24 +197,14 @@ interface TableColumn {
 }
 
 const TABLE_COLUMNS: TableColumn[] = [
-  { key: 'year', label: 'Year', format: 'year' },
   { key: 'age', label: 'Age', format: 'number' },
-  { key: 'employmentIncome', label: 'Employment Income', shortLabel: 'Employment', format: 'currency' },
-  { key: 'cpp', label: 'CPP', format: 'currency' },
-  { key: 'oas', label: 'OAS', format: 'currency' },
-  { key: 'pensionIncome', label: 'Pension', format: 'currency' },
-  { key: 'rrspRrifWithdrawals', label: 'RRSP/RRIF', shortLabel: 'RRSP/RRIF', format: 'currency' },
-  { key: 'tfsaWithdrawals', label: 'TFSA W/D', shortLabel: 'TFSA W/D', format: 'currency' },
-  { key: 'nonRegWithdrawals', label: 'Non-Reg W/D', shortLabel: 'Non-Reg', format: 'currency' },
-  { key: 'totalIncome', label: 'Total Income', shortLabel: 'Total Inc.', format: 'currency' },
-  { key: 'incomeTax', label: 'Income Tax', shortLabel: 'Tax', format: 'currency' },
-  { key: 'marginalTaxRate', label: 'Marginal Rate', shortLabel: 'Marg.%', format: 'percent' },
-  { key: 'afterTaxIncome', label: 'After-Tax Income', shortLabel: 'After-Tax', format: 'currency' },
+  { key: 'totalIncome', label: 'Total Income', shortLabel: 'Income', format: 'currency' },
+  { key: 'incomeTax', label: 'Tax', format: 'currency' },
+  { key: 'afterTaxIncome', label: 'After-Tax', format: 'currency' },
   { key: 'expenses', label: 'Expenses', format: 'currency' },
-  { key: 'netCashFlow', label: 'Net Cash Flow', shortLabel: 'Net CF', format: 'currency' },
-  { key: 'rrspRrifBalance', label: 'RRSP/RRIF Bal.', shortLabel: 'RRSP Bal.', format: 'currency' },
-  { key: 'tfsaBalance', label: 'TFSA Bal.', format: 'currency' },
-  { key: 'nonRegBalance', label: 'Non-Reg Bal.', shortLabel: 'Non-Reg Bal.', format: 'currency' },
+  { key: 'netCashFlow', label: 'Cash Flow', shortLabel: 'Cash Flow', format: 'currency' },
+  { key: 'rrspRrifBalance', label: 'RRSP/RRIF', shortLabel: 'RRSP', format: 'currency' },
+  { key: 'tfsaBalance', label: 'TFSA', format: 'currency' },
   { key: 'netWorth', label: 'Net Worth', format: 'currency' },
 ];
 
@@ -452,11 +442,7 @@ export function Projections() {
           Financial Projections
         </h1>
         <p className="mt-1 text-sm text-text-secondary">
-          Year-by-year projection for{' '}
-          <span className="font-medium text-text-primary">
-            {currentClient.firstName} {currentClient.lastName}
-          </span>
-          . Adjust parameters to explore different scenarios.
+          Adjust the sliders below to see how different retirement ages, returns, and spending levels affect the plan.
         </p>
       </div>
 
@@ -464,11 +450,11 @@ export function Projections() {
       {/*  KEY METRICS CARDS                                        */}
       {/* -------------------------------------------------------- */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-children">
         {/* Income Replacement Ratio */}
         <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
           <p className="text-sm font-medium text-text-secondary">
-            Income Replacement Ratio
+            Income Replacement
           </p>
           <p
             className={`mt-1.5 text-2xl font-semibold tabular-nums tracking-tight ${
@@ -493,7 +479,7 @@ export function Projections() {
         {/* Money Lasts Until Age */}
         <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
           <p className="text-sm font-medium text-text-secondary">
-            Money Lasts Until Age
+            Money Lasts Until
           </p>
           <p
             className={`mt-1.5 text-2xl font-semibold tabular-nums tracking-tight ${
@@ -508,66 +494,21 @@ export function Projections() {
           </p>
           <p className="mt-1 text-xs text-text-secondary">
             {metrics.moneyLastsUntilAge === null
-              ? 'Surplus at age 95'
+              ? `${formatCurrency(metrics.surplusAtAge95 ?? 0)} surplus at 95`
               : `Funds depleted at age ${metrics.moneyLastsUntilAge}`}
           </p>
         </div>
 
-        {/* Total Lifetime Tax */}
+        {/* Lifetime Tax */}
         <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
           <p className="text-sm font-medium text-text-secondary">
-            Total Lifetime Tax
+            Lifetime Tax
           </p>
           <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-text-primary">
             {formatCurrency(metrics.totalLifetimeTax)}
           </p>
           <p className="mt-1 text-xs text-text-secondary">
-            Estimated federal + provincial
-          </p>
-        </div>
-
-        {/* Avg Effective Tax Rate */}
-        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
-          <p className="text-sm font-medium text-text-secondary">
-            Avg Effective Tax Rate (Retirement)
-          </p>
-          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-text-primary">
-            {formatPercent(metrics.avgEffectiveTaxRate ?? 0)}
-          </p>
-          <p className="mt-1 text-xs text-text-secondary">
-            Incl. OAS clawback
-          </p>
-        </div>
-
-        {/* OAS Clawback */}
-        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
-          <p className="text-sm font-medium text-text-secondary">
-            OAS Clawback
-          </p>
-          <p className={`mt-1.5 text-2xl font-semibold tabular-nums tracking-tight ${
-            (metrics.totalOasClawback ?? 0) > 0 ? 'text-negative' : 'text-positive'
-          }`}>
-            {(metrics.totalOasClawback ?? 0) > 0
-              ? formatCurrency(metrics.totalOasClawback ?? 0)
-              : 'None'}
-          </p>
-          <p className="mt-1 text-xs text-text-secondary">
-            {(metrics.oasClawbackYears ?? 0) > 0
-              ? `${metrics.oasClawbackYears} years affected`
-              : 'No clawback projected'}
-          </p>
-        </div>
-
-        {/* CPP + OAS % */}
-        <div className="metric-card bg-card-bg rounded-xl border border-card-border shadow-sm p-5">
-          <p className="text-sm font-medium text-text-secondary">
-            CPP + OAS % of Retirement Income
-          </p>
-          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-text-primary">
-            {formatPercent(metrics.cppOasPercentOfRetirementIncome)}
-          </p>
-          <p className="mt-1 text-xs text-text-secondary">
-            Government benefit reliance
+            Avg {formatPercent(metrics.avgEffectiveTaxRate ?? 0)} effective rate
           </p>
         </div>
       </div>
@@ -608,7 +549,7 @@ export function Projections() {
 
         {paramsExpanded && (
           <div className="px-5 pb-5 border-t border-card-border pt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
               <ParamSlider
                 label="Retirement Age"
                 value={localParams.retirementAge}
@@ -637,49 +578,27 @@ export function Projections() {
                 onChange={(v) => handleParamChange('estimatedCppMonthly', v)}
               />
               <ParamSlider
-                label="OAS Start Age"
-                value={localParams.oasStartAge}
-                min={65}
-                max={70}
-                step={1}
-                formatValue={(v) => `${v}`}
-                onChange={(v) => handleParamChange('oasStartAge', v)}
-              />
-              <ParamSlider
-                label="Inflation Rate"
-                value={localParams.inflationRate * 100}
-                min={0}
-                max={5}
-                step={0.1}
-                formatValue={(v) => `${v.toFixed(1)}%`}
-                onChange={(v) => handleParamChange('inflationRate', v / 100)}
-              />
-              <ParamSlider
-                label="RRSP Return Rate"
+                label="Investment Return"
                 value={localParams.rrspReturnRate * 100}
                 min={0}
                 max={10}
-                step={0.1}
+                step={0.5}
                 formatValue={(v) => `${v.toFixed(1)}%`}
-                onChange={(v) => handleParamChange('rrspReturnRate', v / 100)}
+                onChange={(v) => {
+                  const rate = v / 100;
+                  handleParamChange('rrspReturnRate', rate);
+                  handleParamChange('tfsaReturnRate', rate);
+                  handleParamChange('nonRegReturnRate', Math.max(0, rate - 0.005));
+                }}
               />
               <ParamSlider
-                label="TFSA Return Rate"
-                value={localParams.tfsaReturnRate * 100}
+                label="Inflation"
+                value={localParams.inflationRate * 100}
                 min={0}
-                max={10}
-                step={0.1}
+                max={5}
+                step={0.5}
                 formatValue={(v) => `${v.toFixed(1)}%`}
-                onChange={(v) => handleParamChange('tfsaReturnRate', v / 100)}
-              />
-              <ParamSlider
-                label="Non-Reg Return Rate"
-                value={localParams.nonRegReturnRate * 100}
-                min={0}
-                max={10}
-                step={0.1}
-                formatValue={(v) => `${v.toFixed(1)}%`}
-                onChange={(v) => handleParamChange('nonRegReturnRate', v / 100)}
+                onChange={(v) => handleParamChange('inflationRate', v / 100)}
               />
               <ParamSlider
                 label="Retirement Spending"
@@ -687,7 +606,7 @@ export function Projections() {
                 min={50}
                 max={100}
                 step={5}
-                formatValue={(v) => `${v.toFixed(0)}%`}
+                formatValue={(v) => `${v.toFixed(0)}% of current`}
                 onChange={(v) => handleParamChange('retirementSpendingRate', v / 100)}
               />
             </div>

@@ -261,10 +261,24 @@ export function Projections() {
     },
   );
 
+  // Local contribution overrides for what-if modeling
+  const [localContributions, setLocalContributions] = useState({
+    rrspAnnualContribution: currentClient?.rrspAnnualContribution ?? 0,
+    tfsaAnnualContribution: currentClient?.tfsaAnnualContribution ?? 0,
+    monthlyExpenses: currentClient?.monthlyExpenses ?? 5000,
+  });
+
   // Sync local params when client changes
   useEffect(() => {
     if (currentClient?.projectionParams) {
       setLocalParams(currentClient.projectionParams);
+    }
+    if (currentClient) {
+      setLocalContributions({
+        rrspAnnualContribution: currentClient.rrspAnnualContribution,
+        tfsaAnnualContribution: currentClient.tfsaAnnualContribution,
+        monthlyExpenses: currentClient.monthlyExpenses,
+      });
     }
   }, [currentClient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -273,11 +287,14 @@ export function Projections() {
     if (!currentClient) return;
 
     const timer = setTimeout(() => {
-      updateClient({ projectionParams: localParams });
+      updateClient({
+        projectionParams: localParams,
+        ...localContributions,
+      });
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [localParams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [localParams, localContributions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Generate projections
   const projections: ProjectionRow[] = useMemo(() => {
@@ -285,10 +302,11 @@ export function Projections() {
     // Use a client copy with current local params for instant recalculation
     const clientWithParams = {
       ...currentClient,
+      ...localContributions,
       projectionParams: localParams,
     };
     return generateProjections(clientWithParams);
-  }, [currentClient, localParams]);
+  }, [currentClient, localParams, localContributions]);
 
   // Calculate key metrics
   const metrics = useMemo(
@@ -671,6 +689,38 @@ export function Projections() {
                 formatValue={(v) => `${v.toFixed(0)}%`}
                 onChange={(v) => handleParamChange('retirementSpendingRate', v / 100)}
               />
+            </div>
+            <div className="mt-4 pt-4 border-t border-card-border/60">
+              <p className="text-xs text-text-tertiary tracking-wider uppercase mb-3">Contributions & Expenses</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
+                <ParamSlider
+                  label="RRSP Annual Contribution"
+                  value={localContributions.rrspAnnualContribution}
+                  min={0}
+                  max={32000}
+                  step={500}
+                  formatValue={(v) => `$${v.toLocaleString()}`}
+                  onChange={(v) => setLocalContributions(prev => ({ ...prev, rrspAnnualContribution: v }))}
+                />
+                <ParamSlider
+                  label="TFSA Annual Contribution"
+                  value={localContributions.tfsaAnnualContribution}
+                  min={0}
+                  max={7000}
+                  step={250}
+                  formatValue={(v) => `$${v.toLocaleString()}`}
+                  onChange={(v) => setLocalContributions(prev => ({ ...prev, tfsaAnnualContribution: v }))}
+                />
+                <ParamSlider
+                  label="Monthly Expenses"
+                  value={localContributions.monthlyExpenses}
+                  min={2000}
+                  max={20000}
+                  step={250}
+                  formatValue={(v) => `$${v.toLocaleString()}`}
+                  onChange={(v) => setLocalContributions(prev => ({ ...prev, monthlyExpenses: v }))}
+                />
+              </div>
             </div>
           </div>
         )}

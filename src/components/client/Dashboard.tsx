@@ -228,6 +228,23 @@ export function Dashboard() {
           </h2>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => navigate('/tools')}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-2 text-xs font-medium text-text-secondary transition-all duration-200 hover:border-card-border-hover hover:text-text-primary"
+              title="Quick financial calculators"
+            >
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <rect x="2" y="1" width="9" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.1" />
+                <rect x="3.5" y="2.5" width="6" height="2" rx="0.5" fill="currentColor" opacity="0.3" />
+                <circle cx="5" cy="7" r="0.7" fill="currentColor" />
+                <circle cx="6.5" cy="7" r="0.7" fill="currentColor" />
+                <circle cx="8" cy="7" r="0.7" fill="currentColor" />
+                <circle cx="5" cy="9" r="0.7" fill="currentColor" />
+                <circle cx="6.5" cy="9" r="0.7" fill="currentColor" />
+                <circle cx="8" cy="9" r="0.7" fill="currentColor" />
+              </svg>
+              Calculators
+            </button>
+            <button
               onClick={handleImport}
               className="inline-flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-2 text-xs font-medium text-text-secondary transition-all duration-200 hover:border-card-border-hover hover:text-text-primary"
               title="Import clients from JSON backup"

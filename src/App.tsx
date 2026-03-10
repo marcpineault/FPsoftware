@@ -11,6 +11,7 @@ const Summary = lazy(() => import('./components/recommendations/Summary'));
 const ScenarioComparison = lazy(() => import('./components/scenarios/ScenarioComparison').then(m => ({ default: m.ScenarioComparison })));
 const InsuranceNeeds = lazy(() => import('./components/insurance/InsuranceNeeds').then(m => ({ default: m.InsuranceNeeds })));
 const PlanReport = lazy(() => import('./components/recommendations/PlanReport'));
+const QuickCalc = lazy(() => import('./components/tools/QuickCalc'));
 
 function PageLoader() {
   return (
@@ -34,6 +35,7 @@ function App() {
             <Route path="/client/:id/insurance" element={<InsuranceNeeds />} />
             <Route path="/client/:id/summary" element={<Summary />} />
             <Route path="/client/:id/report" element={<PlanReport />} />
+            <Route path="/tools" element={<QuickCalc />} />
           </Route>
         </Routes>
       </Suspense>

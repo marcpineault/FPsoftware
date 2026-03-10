@@ -45,6 +45,7 @@ export function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
 
   useEffect(() => {
     loadClients().finally(() => setIsLoading(false));
@@ -91,6 +92,74 @@ export function Dashboard() {
     },
     [navigate]
   );
+
+  const handleExportAll = useCallback(() => {
+    if (clients.length === 0) return;
+    const data = {
+      exportedAt: new Date().toISOString(),
+      version: 1,
+      clients,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `meridian-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [clients]);
+
+  const handleImport = useCallback(async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        const importClients = data.clients ?? data;
+        if (!Array.isArray(importClients)) {
+          setImportStatus('Invalid file format');
+          return;
+        }
+        let imported = 0;
+        for (const c of importClients) {
+          if (c.id && c.firstName !== undefined) {
+            // Restore dates
+            c.createdAt = new Date(c.createdAt);
+            c.updatedAt = new Date(c.updatedAt);
+            await db.clients.put(c);
+            imported++;
+          }
+        }
+        await loadClients();
+        setImportStatus(`Imported ${imported} client${imported !== 1 ? 's' : ''}`);
+        setTimeout(() => setImportStatus(null), 3000);
+      } catch {
+        setImportStatus('Failed to import file');
+        setTimeout(() => setImportStatus(null), 3000);
+      }
+    };
+    input.click();
+  }, [loadClients]);
+
+  const handleExportClient = useCallback((client: typeof clients[0]) => {
+    const data = {
+      exportedAt: new Date().toISOString(),
+      version: 1,
+      clients: [client],
+    };
+    const name = [client.firstName, client.lastName].filter(Boolean).join('-') || 'client';
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, []);
 
   const completedPlans = clients.filter(c => c.projectionsViewed).length;
   const totalAssets = clients.reduce((sum, c) =>
@@ -153,17 +222,44 @@ export function Dashboard() {
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-sm font-medium text-text-secondary tracking-wider uppercase">
             {isLoading ? 'Loading...' : `${clients.length} ${clients.length === 1 ? 'Client' : 'Clients'}`}
+            {importStatus && (
+              <span className="ml-3 text-xs text-positive font-normal normal-case">{importStatus}</span>
+            )}
           </h2>
-          <button
-            onClick={handleNewClient}
-            disabled={isCreating}
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-accent-hover hover:shadow-md focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            {isCreating ? 'Creating...' : 'New Client'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleImport}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-2 text-xs font-medium text-text-secondary transition-all duration-200 hover:border-card-border-hover hover:text-text-primary"
+              title="Import clients from JSON backup"
+            >
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                <path d="M6.5 2v7M3.5 6l3 3 3-3M2 11h9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Import
+            </button>
+            {clients.length > 0 && (
+              <button
+                onClick={handleExportAll}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-2 text-xs font-medium text-text-secondary transition-all duration-200 hover:border-card-border-hover hover:text-text-primary"
+                title="Export all clients to JSON backup"
+              >
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <path d="M6.5 9V2M3.5 5l3-3 3 3M2 11h9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Backup All
+              </button>
+            )}
+            <button
+              onClick={handleNewClient}
+              disabled={isCreating}
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-accent-hover hover:shadow-md focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              {isCreating ? 'Creating...' : 'New Client'}
+            </button>
+          </div>
         </div>
 
         {/* Loading state */}
@@ -299,8 +395,21 @@ export function Dashboard() {
                     </div>
                   </button>
 
-                  {/* Delete button */}
-                  <div className="absolute right-2 top-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                  {/* Card actions */}
+                  <div className="absolute right-2 top-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100 flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleExportClient(client);
+                      }}
+                      className="rounded-lg p-1.5 text-text-tertiary/50 transition-all duration-150 hover:bg-accent/10 hover:text-accent"
+                      title="Export client"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M7 10V3M4.5 5.5L7 3l2.5 2.5M3 11h8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
                     <button
                       type="button"
                       onClick={(e) => {

@@ -60,4 +60,13 @@ db.version(6).stores({
   });
 });
 
+// Version 7: Added RRSP deduction room
+db.version(7).stores({
+  clients: 'id, firstName, lastName, updatedAt',
+}).upgrade((tx) => {
+  return tx.table('clients').toCollection().modify((client) => {
+    client.rrspDeductionRoom ??= 0;
+  });
+});
+
 export { db };

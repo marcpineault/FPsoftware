@@ -120,6 +120,9 @@ export interface Client {
   // Projection parameters
   projectionParams: ProjectionParams;
 
+  // RRSP deduction room (from latest NOA)
+  rrspDeductionRoom: number;
+
   // Recommendations
   actionItems: ActionItem[];
   advisorNotes: string;
@@ -212,6 +215,7 @@ export function createDefaultClient(id: string): Client {
     nonRegisteredInvestments: 0,
     children: [],
     respAnnualContribution: 0,
+    rrspDeductionRoom: 0,
     pensionType: 'none',
     primaryResidenceValue: 0,
     mortgageBalance: 0,

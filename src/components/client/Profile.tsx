@@ -734,6 +734,14 @@ export function Profile() {
               placeholder="$6,000.00"
             />
           </Field>
+          <Field label="RRSP Deduction Room (from NOA)">
+            <CurrencyInput
+              value={c.rrspDeductionRoom}
+              onChange={(v) => handleField('rrspDeductionRoom', v)}
+              onBlur={handleBlur}
+              placeholder="$30,000.00"
+            />
+          </Field>
           <Field label="TFSA Balance">
             <CurrencyInput
               value={c.tfsaBalance}

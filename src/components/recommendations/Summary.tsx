@@ -233,6 +233,58 @@ function generateFindings(
     );
   }
 
+  // 17. RRSP deduction room utilization
+  if (client.rrspDeductionRoom > 0 && client.rrspAnnualContribution > 0) {
+    const yearsToUse = Math.ceil(client.rrspDeductionRoom / client.rrspAnnualContribution);
+    if (yearsToUse > 5) {
+      findings.push(
+        `RRSP deduction room of ${formatCurrency(client.rrspDeductionRoom)} at current contribution of ${formatCurrency(client.rrspAnnualContribution)}/year will take ~${yearsToUse} years to utilize. Consider a lump-sum contribution or increasing annual contributions while marginal tax rate is high.`,
+      );
+    }
+  } else if (client.rrspDeductionRoom > 20000 && client.rrspAnnualContribution === 0) {
+    findings.push(
+      `${formatCurrency(client.rrspDeductionRoom)} in unused RRSP deduction room. This is a significant tax-sheltering opportunity being missed.`,
+    );
+  }
+
+  // 18. Mortgage vs RRSP decision
+  if (client.mortgageBalance > 0 && client.mortgageRate > 0) {
+    const afterTaxRate = client.projectionParams.rrspReturnRate;
+    if (client.mortgageRate > afterTaxRate) {
+      findings.push(
+        `Mortgage rate of ${(client.mortgageRate * 100).toFixed(1)}% exceeds expected investment return of ${(afterTaxRate * 100).toFixed(1)}%. Prioritizing mortgage paydown may be more effective than additional RRSP contributions.`,
+      );
+    }
+  }
+
+  // 19. Life insurance capital needs analysis
+  if (!client.hasLifeInsurance && client.annualIncome > 0) {
+    const capitalNeed = client.annualIncome * 10 + client.mortgageBalance + client.otherDebts;
+    findings.push(
+      `No life insurance on file. Estimated capital need: ${formatCurrency(capitalNeed)} (10x income + debts). Term life coverage should be reviewed.`,
+    );
+  }
+
+  // 20. Pension income splitting opportunity at retirement
+  if (client.hasSpouse && client.pensionType !== 'none') {
+    const retRows = projections.filter(r => r.isRetired && (r.pensionSplitSavings ?? 0) > 0);
+    if (retRows.length > 0) {
+      const totalSplitSavings = retRows.reduce((s, r) => s + (r.pensionSplitSavings ?? 0), 0);
+      findings.push(
+        `Pension income splitting projected to save ${formatCurrency(totalSplitSavings)} in total taxes over retirement. Ensure T1032 form is filed annually.`,
+      );
+    }
+  }
+
+  // 21. Debt-to-asset ratio check
+  const totalDebts = client.mortgageBalance + client.otherDebts;
+  const totalAssets = client.rrspBalance + client.tfsaBalance + client.nonRegisteredInvestments + client.primaryResidenceValue;
+  if (totalAssets > 0 && totalDebts / totalAssets > 0.5) {
+    findings.push(
+      `Debt-to-asset ratio of ${((totalDebts / totalAssets) * 100).toFixed(0)}% is elevated. Focus on debt reduction before retirement to lower fixed costs.`,
+    );
+  }
+
   return findings;
 }
 
@@ -335,6 +387,33 @@ function generateDefaultActionItems(client: Client, metrics?: KeyMetrics): Actio
     items.push({
       id: uuidv4(),
       text: 'Consider tax-efficient withdrawal sequencing to reduce effective tax rate',
+      completed: false,
+      category: 'Tax',
+    });
+  }
+
+  if (client.rrspDeductionRoom > 20000) {
+    items.push({
+      id: uuidv4(),
+      text: `Utilize ${formatCurrency(client.rrspDeductionRoom)} RRSP deduction room — consider lump-sum contribution or increased annual amount`,
+      completed: false,
+      category: 'Savings',
+    });
+  }
+
+  if (client.mortgageBalance > 0 && client.mortgageRate > 0.05) {
+    items.push({
+      id: uuidv4(),
+      text: 'Review mortgage renewal options — explore prepayment or refinancing at lower rate',
+      completed: false,
+      category: 'Debt',
+    });
+  }
+
+  if (client.hasSpouse && client.spouse && !client.spouse.rrspBalance && !client.spouse.tfsaBalance) {
+    items.push({
+      id: uuidv4(),
+      text: "Review spouse's registered account contributions — consider spousal RRSP for income splitting",
       completed: false,
       category: 'Tax',
     });

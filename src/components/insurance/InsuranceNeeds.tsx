@@ -167,7 +167,6 @@ export function InsuranceNeeds() {
   const c = currentClient;
 
   // Derive values from client data
-  const clientAge = c ? calculateAge(c.dateOfBirth) : null;
   const spouseAge = c?.hasSpouse && c.spouse?.dateOfBirth
     ? calculateAge(c.spouse.dateOfBirth)
     : null;

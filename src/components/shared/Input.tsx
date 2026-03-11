@@ -101,35 +101,45 @@ interface CurrencyInputProps extends Omit<InputProps, 'value' | 'onChange'> {
 export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
   ({ value, onChange, onValueChange, onFocus, onBlur, ...props }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
+    const [editingValue, setEditingValue] = useState('');
 
-    // While focused we show the raw number so the user can edit freely.
-    // While blurred we show the formatted currency string.
+    // While focused show the local editing value.
+    // While blurred show the formatted currency string.
     const displayValue = (() => {
+      if (isFocused) return editingValue;
       if (value === undefined || value === '') return '';
-      if (isFocused) {
-        // Show raw number while editing
-        const raw = typeof value === 'number' ? String(value) : stripNonNumeric(String(value));
-        return raw === '0' ? '' : raw;
-      }
-      return formatAsCurrency(typeof value === 'number' ? value : stripNonNumeric(String(value)));
+      const num = typeof value === 'number' ? value : parseFloat(stripNonNumeric(String(value)));
+      if (Number.isNaN(num) || num === 0) return '';
+      return formatAsCurrency(num);
     })();
 
     const handleFocus = useCallback(
       (e: React.FocusEvent<HTMLInputElement>) => {
         setIsFocused(true);
+        // Seed the editing value with the raw number
+        const raw = typeof value === 'number' ? String(value) : stripNonNumeric(String(value ?? ''));
+        setEditingValue(raw === '0' ? '' : raw);
         onFocus?.(e);
       },
-      [onFocus],
+      [onFocus, value],
+    );
+
+    const handleChange = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEditingValue(e.target.value);
+        onChange?.(e);
+      },
+      [onChange],
     );
 
     const handleBlur = useCallback(
       (e: React.FocusEvent<HTMLInputElement>) => {
         setIsFocused(false);
-        const num = parseFloat(stripNonNumeric(e.target.value));
+        const num = parseFloat(stripNonNumeric(editingValue));
         onValueChange?.(Number.isNaN(num) ? 0 : num);
         onBlur?.(e);
       },
-      [onBlur, onValueChange],
+      [onBlur, onValueChange, editingValue],
     );
 
     return (
@@ -137,7 +147,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
         ref={ref}
         inputMode="numeric"
         value={displayValue}
-        onChange={onChange ?? (() => {})}
+        onChange={handleChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholder="$0"

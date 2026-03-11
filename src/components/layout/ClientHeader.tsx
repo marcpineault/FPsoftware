@@ -102,13 +102,13 @@ export default function ClientHeader() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => window.print()}
-              className="text-xs font-medium text-slate-400 hover:text-slate-600 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
+              className="text-xs font-medium text-slate-400 hover:text-slate-600 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               Print
             </button>
             <button
               onClick={toggleSettings}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-gray-100 transition-colors"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-gray-100 transition-colors"
               aria-label="Settings"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -120,7 +120,7 @@ export default function ClientHeader() {
         </div>
 
         {/* Tab row */}
-        <nav className="flex gap-0.5 -mb-px" aria-label="Client sections">
+        <nav className="flex gap-0.5 -mb-px overflow-x-auto" aria-label="Client sections">
           {tabs.map((tab) => {
             const active = isActive(tab.path);
             return (
@@ -128,7 +128,7 @@ export default function ClientHeader() {
                 key={tab.path}
                 to={tab.path}
                 className={`
-                  relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors
+                  relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap
                   ${active
                     ? 'text-amber-600'
                     : 'text-slate-400 hover:text-slate-600'

@@ -381,7 +381,7 @@ export default function SetupWizard() {
                 key={s.id}
                 to={`/client/${id}/setup/${s.id}`}
                 className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] transition-all
+                  flex items-center gap-3 px-3 py-3 rounded-lg text-[13px] transition-all
                   ${active
                     ? 'bg-amber-50 text-amber-700 font-semibold shadow-sm border border-amber-200'
                     : visited
@@ -432,12 +432,21 @@ export default function SetupWizard() {
       {/* Step content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile step indicator */}
-        <div className="md:hidden px-4 py-3 bg-white border-b border-gray-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">{currentStepIndex + 1}</span>
-            <span className="text-sm font-semibold text-slate-700">{STEPS[currentStepIndex].label}</span>
+        <div className="md:hidden bg-white border-b border-gray-200">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center shrink-0">{currentStepIndex + 1}</span>
+              <div>
+                <span className="text-sm font-semibold text-slate-700 block">{STEPS[currentStepIndex].label}</span>
+                <span className="text-[11px] text-slate-400">Step {currentStepIndex + 1} of {STEPS.length}</span>
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {STEPS.map((_, i) => (
+                <div key={i} className={`w-2 h-2 rounded-full ${i <= currentStepIndex ? 'bg-amber-400' : 'bg-gray-200'}`} />
+              ))}
+            </div>
           </div>
-          <span className="text-xs text-slate-400">{currentStepIndex + 1}/{STEPS.length}</span>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -533,26 +542,34 @@ export default function SetupWizard() {
 
             {step === 'assets' && (
               <>
-                <FormCard title="RRSP / RRIF">
-                  <FieldRow>
-                    <CurrencyInput label="RRSP Balance" value={c.rrspBalance} onValueChange={(v) => handleField('rrspBalance', v)} />
-                    <CurrencyInput label="Annual Contribution" value={c.rrspAnnualContribution} onValueChange={(v) => handleField('rrspAnnualContribution', v)} />
-                  </FieldRow>
-                </FormCard>
-                <FormCard title="TFSA">
-                  <FieldRow>
-                    <CurrencyInput label="TFSA Balance" value={c.tfsaBalance} onValueChange={(v) => handleField('tfsaBalance', v)} />
-                    <CurrencyInput label="Annual Contribution" value={c.tfsaAnnualContribution} onValueChange={(v) => handleField('tfsaAnnualContribution', v)} />
-                  </FieldRow>
+                <FormCard title="Registered Accounts">
+                  <p className="text-xs text-slate-400 -mt-2 mb-4">Balance and annual contribution for each account type</p>
+                  <div className="space-y-5">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500 mb-2">RRSP / RRIF</p>
+                      <FieldRow>
+                        <CurrencyInput label="Balance" value={c.rrspBalance} onValueChange={(v) => handleField('rrspBalance', v)} />
+                        <CurrencyInput label="Annual Contribution" value={c.rrspAnnualContribution} onValueChange={(v) => handleField('rrspAnnualContribution', v)} />
+                      </FieldRow>
+                    </div>
+                    <div className="border-t border-gray-100 pt-4">
+                      <p className="text-xs font-semibold text-slate-500 mb-2">TFSA</p>
+                      <FieldRow>
+                        <CurrencyInput label="Balance" value={c.tfsaBalance} onValueChange={(v) => handleField('tfsaBalance', v)} />
+                        <CurrencyInput label="Annual Contribution" value={c.tfsaAnnualContribution} onValueChange={(v) => handleField('tfsaAnnualContribution', v)} />
+                      </FieldRow>
+                    </div>
+                    <div className="border-t border-gray-100 pt-4">
+                      <p className="text-xs font-semibold text-slate-500 mb-2">FHSA</p>
+                      <FieldRow>
+                        <CurrencyInput label="Balance" value={c.fhsaBalance} onValueChange={(v) => handleField('fhsaBalance', v)} />
+                        <CurrencyInput label="Annual Contribution" value={c.fhsaAnnualContribution} onValueChange={(v) => handleField('fhsaAnnualContribution', v)} />
+                      </FieldRow>
+                    </div>
+                  </div>
                 </FormCard>
                 <FormCard title="Non-Registered">
                   <CurrencyInput label="Non-Registered Investments" value={c.nonRegisteredInvestments} onValueChange={(v) => handleField('nonRegisteredInvestments', v)} />
-                </FormCard>
-                <FormCard title="FHSA">
-                  <FieldRow>
-                    <CurrencyInput label="FHSA Balance" value={c.fhsaBalance} onValueChange={(v) => handleField('fhsaBalance', v)} />
-                    <CurrencyInput label="Annual Contribution" value={c.fhsaAnnualContribution} onValueChange={(v) => handleField('fhsaAnnualContribution', v)} />
-                  </FieldRow>
                 </FormCard>
                 {c.hasSpouse && (
                   <FormCard title="Spouse Accounts">
@@ -667,7 +684,7 @@ export default function SetupWizard() {
               {currentStepIndex > 0 ? (
                 <button
                   onClick={goPrev}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-all"
+                  className="inline-flex items-center gap-2 px-5 py-3 text-sm font-medium text-slate-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-all"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M9 3L5 7L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -679,7 +696,7 @@ export default function SetupWizard() {
               )}
               <button
                 onClick={goNext}
-                className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-amber-500 rounded-lg hover:bg-amber-400 shadow-md shadow-amber-500/20 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white bg-amber-500 rounded-lg hover:bg-amber-400 shadow-md shadow-amber-500/20 transition-all"
               >
                 {currentStepIndex < STEPS.length - 1 ? 'Next' : 'View Projections'}
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

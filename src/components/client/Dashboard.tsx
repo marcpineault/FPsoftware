@@ -41,6 +41,7 @@ export function Dashboard() {
   const [isCreating, setIsCreating] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     loadClients().finally(() => setIsLoading(false));
@@ -221,8 +222,25 @@ export function Dashboard() {
               </div>
             </div>
 
+            {clients.length > 3 && (
+              <div className="mb-3">
+                <input
+                  type="text"
+                  placeholder="Search clients..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                />
+              </div>
+            )}
+
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100 overflow-hidden stagger-children">
-              {clients.map((client) => {
+              {clients.filter((client) => {
+                if (!searchQuery.trim()) return true;
+                const q = searchQuery.toLowerCase();
+                const name = `${client.firstName} ${client.lastName}`.toLowerCase();
+                return name.includes(q) || client.province?.toLowerCase().includes(q);
+              }).map((client) => {
                 const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ') || 'Unnamed Client';
                 const age = calculateAge(client.dateOfBirth);
                 const isDeleting = deletingId === client.id;
@@ -285,7 +303,7 @@ export function Dashboard() {
                           setDeleteTarget({ id: client.id, name: fullName });
                         }}
                         disabled={isDeleting}
-                        className="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                        className="opacity-40 group-hover:opacity-100 w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
                         title="Delete"
                       >
                         {isDeleting ? (

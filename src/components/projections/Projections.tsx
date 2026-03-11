@@ -91,16 +91,16 @@ function ParamSlider({
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer
           [&::-webkit-slider-thumb]:appearance-none
-          [&::-webkit-slider-thumb]:w-4
-          [&::-webkit-slider-thumb]:h-4
+          [&::-webkit-slider-thumb]:w-5
+          [&::-webkit-slider-thumb]:h-5
           [&::-webkit-slider-thumb]:rounded-full
           [&::-webkit-slider-thumb]:bg-amber-500
           [&::-webkit-slider-thumb]:shadow-sm
           [&::-webkit-slider-thumb]:cursor-pointer
           [&::-webkit-slider-thumb]:transition-transform
           [&::-webkit-slider-thumb]:hover:scale-110
-          [&::-moz-range-thumb]:w-4
-          [&::-moz-range-thumb]:h-4
+          [&::-moz-range-thumb]:w-5
+          [&::-moz-range-thumb]:h-5
           [&::-moz-range-thumb]:rounded-full
           [&::-moz-range-thumb]:bg-amber-500
           [&::-moz-range-thumb]:border-0
@@ -232,7 +232,7 @@ export function Projections() {
   const { currentClient, updateClient } = useAppStore();
 
   const [view, setView] = useState<'table' | 'chart' | 'balances' | 'income'>('table');
-  const [paramsExpanded, setParamsExpanded] = useState(true);
+  const [paramsExpanded, setParamsExpanded] = useState(false);
 
   // Local params state for instant reactivity
   const [localParams, setLocalParams] = useState<ProjectionParams>(
@@ -581,13 +581,19 @@ export function Projections() {
           </p>
         </div>
 
-        {/* Money Lasts Until Age */}
-        <div className="metric-card bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        {/* Money Lasts Until Age — primary metric */}
+        <div className={`metric-card rounded-xl border-2 shadow-sm p-5 ${
+          moneyLastsColor === 'positive'
+            ? 'bg-emerald-50/50 border-emerald-200'
+            : moneyLastsColor === 'warning'
+              ? 'bg-amber-50/50 border-amber-200'
+              : 'bg-red-50/50 border-red-200'
+        }`}>
           <p className="text-sm font-medium text-slate-500">
             Money Lasts Until
           </p>
           <p
-            className={`mt-1.5 text-2xl font-semibold tabular-nums tracking-tight ${
+            className={`mt-1.5 text-3xl font-bold tabular-nums tracking-tight ${
               moneyLastsColor === 'positive'
                 ? 'text-positive'
                 : moneyLastsColor === 'warning'
@@ -654,6 +660,7 @@ export function Projections() {
 
         {paramsExpanded && (
           <div className="px-5 pb-5 border-t border-gray-200 pt-4">
+            <p className="text-xs text-slate-400 tracking-wider uppercase mb-3">Retirement & Benefits</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
               <ParamSlider
                 label="Retirement Age"
@@ -682,6 +689,12 @@ export function Projections() {
                 formatValue={(v) => `$${v.toLocaleString()}`}
                 onChange={(v) => handleParamChange('estimatedCppMonthly', v)}
               />
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-gray-200/60">
+              <p className="text-xs text-slate-400 tracking-wider uppercase mb-3">Investment & Spending</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
               <ParamSlider
                 label="Investment Return"
                 value={localParams.rrspReturnRate * 100}
@@ -715,23 +728,24 @@ export function Projections() {
                 onChange={(v) => handleParamChange('retirementSpendingRate', v / 100)}
               />
             </div>
+
             {/* Strategy toggles */}
-            <div className="mt-4 pt-4 border-t border-gray-200/60 flex flex-wrap gap-x-6 gap-y-2">
-              <label className="flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
+            <div className="mt-4 pt-4 border-t border-gray-200/60 flex flex-wrap gap-x-6 gap-y-3">
+              <label className="flex items-center gap-2.5 text-sm text-slate-600 cursor-pointer py-1">
                 <input
                   type="checkbox"
                   checked={localParams.enablePensionSplitting}
                   onChange={(e) => handleParamChange('enablePensionSplitting', e.target.checked)}
-                  className="rounded border-gray-200 text-amber-600 focus:ring-amber-500/20"
+                  className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500/20"
                 />
                 Pension Splitting
               </label>
-              <label className="flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
+              <label className="flex items-center gap-2.5 text-sm text-slate-600 cursor-pointer py-1">
                 <input
                   type="checkbox"
                   checked={localParams.earlyRrifConversion ?? false}
                   onChange={(e) => handleParamChange('earlyRrifConversion', e.target.checked)}
-                  className="rounded border-gray-200 text-amber-600 focus:ring-amber-500/20"
+                  className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500/20"
                 />
                 Early RRIF at 65
                 <span className="text-xs text-slate-400">(enables splitting)</span>
@@ -778,11 +792,11 @@ export function Projections() {
       {/*  VIEW TOGGLE                                              */}
       {/* -------------------------------------------------------- */}
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center bg-white border border-gray-200 rounded-lg p-1 overflow-x-auto max-w-full">
           <button
             onClick={() => setView('table')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
               view === 'table'
                 ? 'bg-navy text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-800'
@@ -801,7 +815,7 @@ export function Projections() {
           </button>
           <button
             onClick={() => setView('chart')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
               view === 'chart'
                 ? 'bg-navy text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-800'
@@ -816,7 +830,7 @@ export function Projections() {
           </button>
           <button
             onClick={() => setView('balances')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
               view === 'balances'
                 ? 'bg-navy text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-800'
@@ -832,7 +846,7 @@ export function Projections() {
           </button>
           <button
             onClick={() => setView('income')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
               view === 'income'
                 ? 'bg-navy text-white shadow-sm'
                 : 'text-slate-500 hover:text-slate-800'
@@ -849,9 +863,8 @@ export function Projections() {
           </button>
         </div>
 
-        <p className="text-xs text-slate-500">
-          Showing ages {projections[0]?.age ?? '--'} to{' '}
-          {projections[projections.length - 1]?.age ?? '--'} ({projections.length} years)
+        <p className="text-xs text-slate-500 shrink-0">
+          Ages {projections[0]?.age ?? '--'} – {projections[projections.length - 1]?.age ?? '--'}
         </p>
       </div>
 

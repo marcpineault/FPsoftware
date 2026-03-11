@@ -488,7 +488,7 @@ export function Projections() {
         })() : null;
         const isPreRetirement = age !== null && age < localParams.retirementAge;
         const retirementRow = projections.find((r) => r.isRetired);
-        const totalAnnualSaving = (localContributions.rrspAnnualContribution || 0) + (localContributions.tfsaAnnualContribution || 0);
+        const totalAnnualSaving = (localContributions.rrspAnnualContribution || 0) + (localContributions.tfsaAnnualContribution || 0) + (currentClient.fhsaAnnualContribution || 0);
         const monthlyExpenses = localContributions.monthlyExpenses;
         const retirementExpenses = Math.round(monthlyExpenses * localParams.retirementSpendingRate);
 

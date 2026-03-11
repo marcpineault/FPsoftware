@@ -622,7 +622,11 @@ export function generateProjections(client: Client): ProjectionRow[] {
         baseTaxableIncome,
         client.province,
       );
-      const afterTaxBase = incomeBeforeDiscretionary - taxOnBaseIncome;
+      // Also compute spouse's tax on their guaranteed income
+      const spouseGuaranteedTaxable = spouseEmploymentIncome + spouseCpp + spouseOasGross;
+      const spouseTaxOnBase = spouseGuaranteedTaxable > 0
+        ? estimateIncomeTax(spouseGuaranteedTaxable, client.province) : 0;
+      const afterTaxBase = incomeBeforeDiscretionary - taxOnBaseIncome - spouseTaxOnBase;
 
       const shortfall = Math.max(0, expenses - afterTaxBase);
 
@@ -794,16 +798,33 @@ export function generateProjections(client: Client): ProjectionRow[] {
       incomeTax = Math.max(0, incomeTax - dtcResult.federalDtc - dtcResult.provincialDtc);
     }
 
+    // --- Spouse's income tax (spouse is taxed separately) ---
+    let spouseTax = 0;
+    if (hasSpouse) {
+      const spouseTaxableIncome = spouseEmploymentIncome + spouseCpp + spouseOasGross;
+      if (spouseTaxableIncome > 0) {
+        spouseTax = estimateIncomeTax(spouseTaxableIncome, client.province);
+      }
+    }
+
+    // Total household tax (client + spouse)
+    const householdTax = incomeTax + spouseTax;
+
     // Total cash received (OAS is reduced by clawback, GIS is tax-free)
     const totalIncome = employmentIncome + cpp + oasNet + gisAmount + pensionIncome
       + spouseEmploymentIncome + spouseCpp + spouseOasGross
       + rrspWithdrawal + tfsaWithdrawal + nonRegWithdrawal;
 
-    const afterTaxIncome = totalIncome - incomeTax;
-    const netCashFlow = afterTaxIncome - expenses;
+    const afterTaxIncome = totalIncome - householdTax;
+
+    // Pre-retirement: subtract savings contributions from cash flow
+    const annualContributions = !isRetired
+      ? (client.rrspAnnualContribution + client.tfsaAnnualContribution + (client.fhsaAnnualContribution || 0))
+      : 0;
+    const netCashFlow = afterTaxIncome - expenses - annualContributions;
 
     // Effective tax rate
-    const effectiveTaxRate = totalIncome > 0 ? (incomeTax + oasClawback) / totalIncome : 0;
+    const effectiveTaxRate = totalIncome > 0 ? (householdTax + oasClawback) / totalIncome : 0;
 
     // Net worth: balances + home - debts
     const homeValue = Math.round(
@@ -837,7 +858,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
       nonRegWithdrawals: nonRegWithdrawal,
       nonRegTaxableGain: nonRegTaxableGain > 0 ? nonRegTaxableGain : undefined,
       totalIncome,
-      incomeTax,
+      incomeTax: householdTax,
       afterTaxIncome,
       expenses,
       netCashFlow,

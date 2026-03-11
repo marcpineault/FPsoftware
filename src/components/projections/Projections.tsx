@@ -473,6 +473,85 @@ export function Projections() {
       )}
 
       {/* -------------------------------------------------------- */}
+      {/*  THE BOTTOM LINE — answers the real questions             */}
+      {/* -------------------------------------------------------- */}
+
+      {projections.length > 0 && currentClient.annualIncome > 0 && (() => {
+        const age = currentClient.dateOfBirth ? (() => {
+          const birth = new Date(currentClient.dateOfBirth);
+          if (isNaN(birth.getTime())) return null;
+          const today = new Date();
+          let a = today.getFullYear() - birth.getFullYear();
+          const m = today.getMonth() - birth.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) a--;
+          return a;
+        })() : null;
+        const isPreRetirement = age !== null && age < localParams.retirementAge;
+        const retirementRow = projections.find((r) => r.isRetired);
+        const totalAnnualSaving = (localContributions.rrspAnnualContribution || 0) + (localContributions.tfsaAnnualContribution || 0);
+        const monthlyExpenses = localContributions.monthlyExpenses;
+        const retirementExpenses = Math.round(monthlyExpenses * localParams.retirementSpendingRate);
+
+        return (
+          <div className="rounded-xl bg-white border border-gray-200 shadow-sm p-5">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">The Bottom Line</h3>
+            {isPreRetirement ? (
+              <div className="space-y-2">
+                <p className="text-sm text-slate-700">
+                  <span className="font-semibold">To retire at age {localParams.retirementAge}</span>, you're currently saving{' '}
+                  <span className="font-semibold tabular-nums">{formatCurrency(totalAnnualSaving)}/year</span>
+                  {totalAnnualSaving > 0 && currentClient.annualIncome > 0 && (
+                    <span className="text-slate-500"> ({Math.round((totalAnnualSaving / currentClient.annualIncome) * 100)}% of income)</span>
+                  )}.
+                </p>
+                <p className="text-sm text-slate-700">
+                  In retirement, you'll need roughly{' '}
+                  <span className="font-semibold tabular-nums">{formatCurrency(retirementExpenses)}/month</span>
+                  {' '}({Math.round(localParams.retirementSpendingRate * 100)}% of current spending).
+                  {retirementRow && (
+                    <span> Your projected after-tax income at retirement is{' '}
+                      <span className="font-semibold tabular-nums">{formatCurrency(Math.round(retirementRow.afterTaxIncome / 12))}/month</span>.
+                    </span>
+                  )}
+                </p>
+                {metrics.moneyLastsUntilAge === null ? (
+                  <p className="text-sm text-positive font-medium">
+                    Your savings are projected to last through age 95{metrics.surplusAtAge95 != null && metrics.surplusAtAge95 > 0 ? ` with a ${formatCurrency(metrics.surplusAtAge95)} surplus` : ''}.
+                  </p>
+                ) : (
+                  <p className="text-sm text-negative font-medium">
+                    At this rate, savings run out at age {metrics.moneyLastsUntilAge}. Consider saving more, retiring later, or reducing planned expenses.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm text-slate-700">
+                  <span className="font-semibold">You're in retirement.</span> Your current planned spending is{' '}
+                  <span className="font-semibold tabular-nums">{formatCurrency(monthlyExpenses)}/month</span>.
+                </p>
+                {retirementRow && (
+                  <p className="text-sm text-slate-700">
+                    After-tax income from all sources:{' '}
+                    <span className="font-semibold tabular-nums">{formatCurrency(Math.round(retirementRow.afterTaxIncome / 12))}/month</span>.
+                  </p>
+                )}
+                {metrics.moneyLastsUntilAge === null ? (
+                  <p className="text-sm text-positive font-medium">
+                    You can comfortably sustain this spending through age 95.
+                  </p>
+                ) : (
+                  <p className="text-sm text-negative font-medium">
+                    At current spending, savings are projected to run out at age {metrics.moneyLastsUntilAge}. Consider reducing withdrawals.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* -------------------------------------------------------- */}
       {/*  KEY METRICS CARDS                                        */}
       {/* -------------------------------------------------------- */}
 

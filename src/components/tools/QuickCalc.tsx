@@ -314,13 +314,16 @@ export default function QuickCalc() {
         <div className="mb-6">
           <button
             onClick={() => navigate('/')}
-            className="text-sm text-amber-600 hover:text-amber-500 mb-4 inline-block"
+            className="flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-slate-600 mb-4 transition-colors group"
           >
-            &larr; Back to Dashboard
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="group-hover:-translate-x-0.5 transition-transform">
+              <path d="M9 3L5 7L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Dashboard
           </button>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-wide">Quick Calculators</h1>
+          <h1 className="text-xl font-semibold text-slate-800">Quick Calculators</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Financial planning tools for quick calculations
+            Standalone financial planning tools — no client data required.
           </p>
         </div>
 

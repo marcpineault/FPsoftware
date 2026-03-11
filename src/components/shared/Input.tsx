@@ -9,9 +9,9 @@ import type { InputHTMLAttributes } from 'react';
 function formatAsCurrency(value: string | number): string {
   const num = typeof value === 'number' ? value : parseFloat(value.replace(/[^0-9.-]/g, ''));
   if (Number.isNaN(num)) return '';
-  return num.toLocaleString('en-US', {
+  return num.toLocaleString('en-CA', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'CAD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   });

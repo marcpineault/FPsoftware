@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAppStore } from '../../store';
 import { db } from '../../db';
 import { createDefaultClient } from '../../lib/types';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
 
 function calculateAge(dob: string): number | null {
   if (!dob) return null;
@@ -39,6 +40,7 @@ export function Dashboard() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     loadClients().finally(() => setIsLoading(false));
@@ -64,15 +66,16 @@ export function Dashboard() {
     }
   }, [isCreating, navigate, setCurrentClient, practiceSettings]);
 
-  const handleDeleteClient = useCallback(
-    async (e: React.MouseEvent, id: string, name: string) => {
-      e.stopPropagation();
-      if (!window.confirm(`Delete ${name.trim() || 'this client'}? This cannot be undone.`)) return;
-      setDeletingId(id);
-      try { await deleteClient(id); } finally { setDeletingId(null); }
-    },
-    [deleteClient],
-  );
+  const confirmDeleteClient = useCallback(async () => {
+    if (!deleteTarget) return;
+    setDeletingId(deleteTarget.id);
+    setDeleteTarget(null);
+    try {
+      await deleteClient(deleteTarget.id);
+    } finally {
+      setDeletingId(null);
+    }
+  }, [deleteTarget, deleteClient]);
 
   const handleExportAll = useCallback(() => {
     if (clients.length === 0) return;
@@ -114,28 +117,28 @@ export function Dashboard() {
   }, [loadClients]);
 
   return (
-    <div className="min-h-full" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)' }}>
+    <div className="min-h-full bg-gray-50">
       {/* Header */}
-      <header className="border-b border-white/10">
-        <div className="max-w-6xl mx-auto px-8 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/25">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-sm">
               <span className="text-white font-serif text-lg font-bold">M</span>
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-white tracking-tight">
+              <h1 className="text-lg font-semibold text-slate-800 tracking-tight">
                 {practiceSettings.firmName || 'Meridian'}
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-400">
                 {new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={handleNewClient}
               disabled={isCreating}
-              className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 hover:bg-amber-400 transition-all hover:shadow-amber-500/40 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 transition-colors disabled:opacity-50"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -144,7 +147,7 @@ export function Dashboard() {
             </button>
             <button
               onClick={toggleSettings}
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-gray-100 transition-colors"
               aria-label="Settings"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -157,9 +160,9 @@ export function Dashboard() {
       </header>
 
       {/* Content */}
-      <main className="max-w-6xl mx-auto px-8 py-8">
+      <main className="max-w-5xl mx-auto px-6 sm:px-8 py-8">
         {importStatus && (
-          <div className="mb-4 px-4 py-2.5 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-300 text-sm">
+          <div className="mb-5 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm font-medium">
             {importStatus}
           </div>
         )}
@@ -167,27 +170,27 @@ export function Dashboard() {
         {/* Loading */}
         {isLoading && (
           <div className="flex items-center justify-center py-24">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
           </div>
         )}
 
         {/* Empty state */}
         {!isLoading && clients.length === 0 && (
-          <div className="rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 px-8 py-20 text-center">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-white/10 flex items-center justify-center mb-5">
-              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="text-slate-400">
+          <div className="rounded-2xl bg-white border border-gray-200 px-8 py-20 text-center shadow-sm">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-50 flex items-center justify-center mb-5">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="text-amber-500">
                 <circle cx="14" cy="10" r="4.5" stroke="currentColor" strokeWidth="1.5" />
                 <path d="M5 26c0-5 4-9 9-9s9 4 9 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-white">Welcome to Meridian</h3>
-            <p className="mt-3 text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
-              Create your first client to get started with financial planning.
+            <h3 className="text-xl font-semibold text-slate-800">Welcome to Meridian</h3>
+            <p className="mt-2 text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+              Create your first client to get started with comprehensive financial planning.
             </p>
             <button
               onClick={handleNewClient}
               disabled={isCreating}
-              className="mt-8 inline-flex items-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-amber-500/25 hover:bg-amber-400 transition-all disabled:opacity-50"
+              className="mt-6 inline-flex items-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 transition-colors disabled:opacity-50"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -199,54 +202,63 @@ export function Dashboard() {
 
         {/* Client list */}
         {!isLoading && clients.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-medium text-slate-500 uppercase tracking-wider">
                 {clients.length} {clients.length === 1 ? 'Client' : 'Clients'}
               </h2>
+              <div className="flex items-center gap-3">
+                <button onClick={() => navigate('/tools')} className="text-xs font-medium text-amber-600 hover:text-amber-700 transition-colors">
+                  Quick Calculators
+                </button>
+                <span className="w-px h-3 bg-gray-200" />
+                <button onClick={handleImport} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors">
+                  Import
+                </button>
+                <button onClick={handleExportAll} className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors">
+                  Export
+                </button>
+              </div>
             </div>
 
-            {clients.map((client) => {
-              const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ') || 'Unnamed Client';
-              const age = calculateAge(client.dateOfBirth);
-              const isDeleting = deletingId === client.id;
-              const totalSavings = (client.rrspBalance || 0) + (client.tfsaBalance || 0) + (client.nonRegisteredInvestments || 0);
-              const progress = [client.discoveryComplete, client.profileComplete, client.projectionsViewed].filter(Boolean).length;
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100 overflow-hidden stagger-children">
+              {clients.map((client) => {
+                const fullName = [client.firstName, client.lastName].filter(Boolean).join(' ') || 'Unnamed Client';
+                const age = calculateAge(client.dateOfBirth);
+                const isDeleting = deletingId === client.id;
+                const totalSavings = (client.rrspBalance || 0) + (client.tfsaBalance || 0) + (client.nonRegisteredInvestments || 0);
+                const progress = [client.discoveryComplete, client.profileComplete, client.projectionsViewed].filter(Boolean).length;
 
-              return (
-                <div
-                  key={client.id}
-                  onClick={() => navigate(`/client/${client.id}/setup/client`)}
-                  className="group relative rounded-xl bg-white/[0.07] backdrop-blur-sm border border-white/[0.08] hover:bg-white/[0.12] hover:border-white/[0.15] transition-all duration-200 cursor-pointer"
-                >
-                  <div className="flex items-center gap-4 px-5 py-4">
+                return (
+                  <div
+                    key={client.id}
+                    onClick={() => navigate(`/client/${client.id}/setup/client`)}
+                    className="group flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
                     {/* Avatar */}
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center shrink-0 shadow-inner">
-                      <span className="text-sm font-semibold text-slate-300">{getInitials(client.firstName, client.lastName)}</span>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0 border border-slate-200">
+                      <span className="text-sm font-semibold text-slate-500">{getInitials(client.firstName, client.lastName)}</span>
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <h3 className="text-[15px] font-semibold text-white truncate">{fullName}</h3>
+                        <h3 className="text-sm font-semibold text-slate-800 truncate">{fullName}</h3>
                         {age !== null && (
-                          <span className="text-xs text-slate-500 shrink-0">Age {age}</span>
+                          <span className="text-xs text-slate-400 shrink-0">Age {age}</span>
+                        )}
+                        {client.province && (
+                          <span className="text-xs text-slate-400 shrink-0">{client.province}</span>
                         )}
                       </div>
-                      <div className="flex items-center gap-3 mt-1">
-                        {client.province && (
-                          <span className="text-xs text-slate-500">{client.province}</span>
-                        )}
+                      <div className="flex items-center gap-3 mt-0.5">
                         {client.annualIncome > 0 && (
-                          <>
-                            <span className="w-1 h-1 rounded-full bg-slate-600" />
-                            <span className="text-xs text-slate-500">Income {formatCurrency(client.annualIncome)}</span>
-                          </>
+                          <span className="text-xs text-slate-400 tabular-nums">Income {formatCurrency(client.annualIncome)}</span>
                         )}
                         {totalSavings > 0 && (
                           <>
-                            <span className="w-1 h-1 rounded-full bg-slate-600" />
-                            <span className="text-xs text-slate-500">Savings {formatCurrency(totalSavings)}</span>
+                            {client.annualIncome > 0 && <span className="w-0.5 h-0.5 rounded-full bg-slate-300" />}
+                            <span className="text-xs text-slate-400 tabular-nums">Savings {formatCurrency(totalSavings)}</span>
                           </>
                         )}
                       </div>
@@ -254,23 +266,26 @@ export function Dashboard() {
 
                     {/* Right side */}
                     <div className="flex items-center gap-4 shrink-0">
-                      {/* Progress dots */}
-                      <div className="flex items-center gap-1.5">
+                      {/* Progress */}
+                      <div className="flex items-center gap-1" title={`${progress} of 3 steps complete`}>
                         {[0, 1, 2].map((i) => (
                           <div
                             key={i}
-                            className={`w-2 h-2 rounded-full ${i < progress ? 'bg-emerald-400' : 'bg-slate-700'}`}
+                            className={`w-1.5 h-1.5 rounded-full transition-colors ${i < progress ? 'bg-emerald-400' : 'bg-gray-200'}`}
                           />
                         ))}
                       </div>
 
-                      <span className="text-xs text-slate-600">{formatDate(client.updatedAt)}</span>
+                      <span className="text-xs text-slate-400 tabular-nums hidden sm:inline">{formatDate(client.updatedAt)}</span>
 
                       {/* Delete */}
                       <button
-                        onClick={(e) => handleDeleteClient(e, client.id, fullName)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTarget({ id: client.id, name: fullName });
+                        }}
                         disabled={isDeleting}
-                        className="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                        className="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
                         title="Delete"
                       >
                         {isDeleting ? (
@@ -283,31 +298,29 @@ export function Dashboard() {
                       </button>
 
                       {/* Arrow */}
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-slate-600 group-hover:text-slate-400 group-hover:translate-x-0.5 transition-all">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-slate-300 group-hover:text-slate-400 group-hover:translate-x-0.5 transition-all">
                         <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Footer */}
-        {!isLoading && (
-          <div className="mt-8 pt-6 border-t border-white/[0.06] flex items-center gap-5">
-            <button onClick={handleImport} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
-              Import Clients
-            </button>
-            {clients.length > 0 && (
-              <button onClick={handleExportAll} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
-                Export Backup
-              </button>
-            )}
+                );
+              })}
+            </div>
           </div>
         )}
       </main>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete Client"
+        message={`Are you sure you want to delete ${deleteTarget?.name || 'this client'}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Keep"
+        variant="danger"
+        onConfirm={confirmDeleteClient}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

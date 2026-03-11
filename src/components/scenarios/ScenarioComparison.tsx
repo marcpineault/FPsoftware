@@ -519,36 +519,33 @@ export function ScenarioComparison() {
   /* -------------------------------------------------------------- */
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Page header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-wide">
+        <h1 className="text-xl font-semibold text-slate-800">
           Scenario Comparison
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Compare up to 3 scenarios side by side for{' '}
-          <span className="font-medium text-slate-800">
-            {currentClient.firstName} {currentClient.lastName}
-          </span>
-          .
+          Compare up to 3 scenarios side by side. Choose a preset or customize the parameters below.
         </p>
       </div>
 
       {/* Quick Presets */}
-      <Card title="Quick Presets">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Quick Presets</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {PRESETS.map((preset) => (
             <button
               key={preset.label}
               onClick={() => handleApplyPreset(preset)}
-              className="text-left rounded-lg border border-gray-200 p-3 hover:border-slate-800 hover:bg-gray-50/50 transition-colors"
+              className="text-left rounded-lg border border-gray-200 px-3 py-2.5 hover:border-amber-300 hover:bg-amber-50/50 transition-all group"
             >
-              <p className="text-sm font-medium text-slate-800">{preset.label}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{preset.description}</p>
+              <p className="text-sm font-medium text-slate-700 group-hover:text-amber-700">{preset.label}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{preset.description}</p>
             </button>
           ))}
         </div>
-      </Card>
+      </div>
 
       {/* Scenario Editors */}
       <Card title="Scenario Parameters">

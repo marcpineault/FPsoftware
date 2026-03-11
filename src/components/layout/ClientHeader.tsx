@@ -42,6 +42,13 @@ export default function ClientHeader() {
         <line x1="2" y1="13" x2="13" y2="13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
       </svg>
     )},
+    { label: 'Scenarios', path: `/client/${id}/scenarios`, icon: (
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+        <rect x="1.5" y="4" width="4" height="9" rx="0.8" stroke="currentColor" strokeWidth="1.1" />
+        <rect x="5.5" y="2" width="4" height="11" rx="0.8" stroke="currentColor" strokeWidth="1.1" />
+        <rect x="9.5" y="6" width="4" height="7" rx="0.8" stroke="currentColor" strokeWidth="1.1" />
+      </svg>
+    )},
     { label: 'Insurance', path: `/client/${id}/insurance`, icon: (
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
         <path d="M7.5 1.5L3 3.5v3.5c0 3 2 5 4.5 5.5 2.5-.5 4.5-2.5 4.5-5.5V3.5L7.5 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
@@ -58,32 +65,33 @@ export default function ClientHeader() {
   const isActive = (tabPath: string) => location.pathname.startsWith(tabPath);
 
   return (
-    <header className="no-print shrink-0" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+    <header className="no-print shrink-0 bg-white border-b border-gray-200">
       <div className="max-w-[1400px] mx-auto px-6">
         {/* Top row */}
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between h-14">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group"
+              className="flex items-center gap-1.5 text-slate-400 hover:text-slate-600 transition-colors group"
               title="Back to Dashboard"
             >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="group-hover:-translate-x-0.5 transition-transform">
-                <path d="M11 5L7 9L11 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="group-hover:-translate-x-0.5 transition-transform">
+                <path d="M10 4L6 8L10 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
+              <span className="text-xs font-medium hidden sm:inline">Dashboard</span>
             </button>
 
-            <div className="w-px h-6 bg-slate-700" />
+            <div className="w-px h-5 bg-gray-200" />
 
             {/* Client avatar + name */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-sm">
-                <span className="text-[11px] font-bold text-white">{getInitials(firstName, lastName)}</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white">{getInitials(firstName, lastName)}</span>
               </div>
-              <div>
-                <span className="text-sm font-semibold text-white">{clientName}</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-semibold text-slate-800">{clientName}</span>
                 {age !== null && currentClient && (
-                  <span className="text-xs text-slate-500 ml-2">
+                  <span className="text-xs text-slate-400">
                     {age}y &middot; {currentClient.province}
                   </span>
                 )}
@@ -91,16 +99,16 @@ export default function ClientHeader() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => window.print()}
-              className="text-xs text-slate-500 hover:text-slate-300 px-3 py-1.5 rounded-md hover:bg-white/5 transition-all"
+              className="text-xs font-medium text-slate-400 hover:text-slate-600 px-3 py-1.5 rounded-md hover:bg-gray-100 transition-colors"
             >
               Print
             </button>
             <button
               onClick={toggleSettings}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-white hover:bg-white/10 transition-all"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-gray-100 transition-colors"
               aria-label="Settings"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -112,7 +120,7 @@ export default function ClientHeader() {
         </div>
 
         {/* Tab row */}
-        <nav className="flex gap-1" aria-label="Client sections">
+        <nav className="flex gap-0.5 -mb-px" aria-label="Client sections">
           {tabs.map((tab) => {
             const active = isActive(tab.path);
             return (
@@ -120,15 +128,18 @@ export default function ClientHeader() {
                 key={tab.path}
                 to={tab.path}
                 className={`
-                  flex items-center gap-2 px-4 py-2.5 rounded-t-lg text-sm font-medium transition-all
+                  relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors
                   ${active
-                    ? 'bg-gray-50 text-slate-800 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                    ? 'text-amber-600'
+                    : 'text-slate-400 hover:text-slate-600'
                   }
                 `}
               >
-                <span className={active ? 'text-amber-500' : ''}>{tab.icon}</span>
+                <span>{tab.icon}</span>
                 {tab.label}
+                {active && (
+                  <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-amber-500 rounded-full" />
+                )}
               </Link>
             );
           })}

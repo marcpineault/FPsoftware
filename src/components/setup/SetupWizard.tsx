@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAppStore } from '../../store';
 import { PROVINCE_NAMES } from '../../lib/constants';
@@ -67,16 +67,29 @@ function FieldRow({ children, cols = 2 }: { children: React.ReactNode; cols?: nu
 
 function FormCard({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden ring-1 ring-gray-100">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {title && (
-        <div className="px-6 py-3 bg-gradient-to-r from-slate-800 to-slate-700 border-b border-gray-200">
-          <h3 className="text-[13px] font-medium text-white/90 uppercase tracking-wider">{title}</h3>
+        <div className="px-6 py-3 border-b border-gray-100 bg-gray-50/80">
+          <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{title}</h3>
         </div>
       )}
       <div className="px-6 py-5 space-y-5">
         {children}
       </div>
     </div>
+  );
+}
+
+function SaveIndicator({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 animate-fade-in">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M4.5 7L6.5 9L9.5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      Saved
+    </span>
   );
 }
 
@@ -99,21 +112,33 @@ export default function SetupWizard() {
 
   const step: StepId = (rawStep as StepId) || 'client';
   const currentStepIndex = STEPS.findIndex((s) => s.id === step);
+  const [showSaved, setShowSaved] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+
+  const flashSaved = useCallback(() => {
+    setShowSaved(true);
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => setShowSaved(false), 2000);
+  }, []);
+
+  useEffect(() => () => clearTimeout(saveTimer.current), []);
 
   const handleField = useCallback(
     (field: keyof Client, value: Client[keyof Client]) => {
       if (!currentClient) return;
       updateClient({ [field]: value });
+      flashSaved();
     },
-    [currentClient, updateClient],
+    [currentClient, updateClient, flashSaved],
   );
 
   const handleParam = useCallback(
     (field: string, value: number | boolean) => {
       if (!currentClient) return;
       updateClient({ projectionParams: { ...currentClient.projectionParams, [field]: value } });
+      flashSaved();
     },
-    [currentClient, updateClient],
+    [currentClient, updateClient, flashSaved],
   );
 
   const handleSpouseField = useCallback(
@@ -127,8 +152,9 @@ export default function SetupWizard() {
         rrspBalance: 0, spousalRrspBalance: 0, tfsaBalance: 0,
       };
       updateClient({ spouse: { ...spouse, [field]: value } });
+      flashSaved();
     },
-    [currentClient, updateClient],
+    [currentClient, updateClient, flashSaved],
   );
 
   const handleInsuranceDetail = useCallback(
@@ -138,8 +164,9 @@ export default function SetupWizard() {
         coverageAmount: 0, type: 'term' as InsuranceType, source: 'personal' as InsuranceSource,
       };
       updateClient({ lifeInsuranceDetails: { ...details, [field]: value } });
+      flashSaved();
     },
-    [currentClient, updateClient],
+    [currentClient, updateClient, flashSaved],
   );
 
   const handlePensionDetail = useCallback(
@@ -149,8 +176,9 @@ export default function SetupWizard() {
         annualBenefitEstimate: 0, currentBalance: 0, annualContribution: 0,
       };
       updateClient({ pensionDetails: { ...details, [field]: value } });
+      flashSaved();
     },
-    [currentClient, updateClient],
+    [currentClient, updateClient, flashSaved],
   );
 
   const goNext = () => {
@@ -256,17 +284,20 @@ export default function SetupWizard() {
           <div className="max-w-2xl mx-auto px-6 py-8 space-y-5">
             {/* Step header */}
             <div className="mb-2">
-              <h2 className="text-2xl font-bold text-slate-800">
-                {STEPS[currentStepIndex].label}
-              </h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-slate-800">
+                  {STEPS[currentStepIndex].label}
+                </h2>
+                <SaveIndicator show={showSaved} />
+              </div>
               <p className="text-sm text-slate-500 mt-1">
-                {step === 'client' && 'Basic client information.'}
-                {step === 'income' && 'Employment and income details.'}
-                {step === 'expenses' && 'Monthly and annual expenses.'}
-                {step === 'assets' && 'Registered and non-registered accounts.'}
-                {step === 'debts' && 'Mortgage, property, and other debts.'}
-                {step === 'benefits' && 'CPP, OAS, and pension information.'}
-                {step === 'insurance' && 'Life, disability, and critical illness coverage.'}
+                {step === 'client' && 'Start with the basics — name, date of birth, and province determine tax calculations.'}
+                {step === 'income' && 'Current employment income drives retirement income replacement targets.'}
+                {step === 'expenses' && 'Monthly spending determines how much income is needed in retirement.'}
+                {step === 'assets' && 'Account balances and contributions form the foundation of retirement projections.'}
+                {step === 'debts' && 'Debts affect net worth and insurance needs analysis.'}
+                {step === 'benefits' && 'Government benefits and pensions are major retirement income sources.'}
+                {step === 'insurance' && 'Coverage details feed into the insurance needs analysis.'}
               </p>
             </div>
 

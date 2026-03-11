@@ -385,13 +385,23 @@ export function Projections() {
   if (!currentClient) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-slate-500 text-sm">No client loaded.</p>
+        <div className="text-center max-w-sm">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-amber-50 flex items-center justify-center mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-amber-500">
+              <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M4 21c0-4 3.5-7.5 8-7.5s8 3.5 8 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <p className="text-slate-700 font-medium">No client loaded</p>
+          <p className="text-slate-400 text-sm mt-1">Select a client from the dashboard to view their projections.</p>
           <button
             onClick={() => navigate('/')}
-            className="mt-3 text-sm text-amber-600 hover:text-amber-600-hover underline"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors"
           >
-            Return to dashboard
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M9 3L5 7L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back to Dashboard
           </button>
         </div>
       </div>
@@ -424,6 +434,12 @@ export function Projections() {
   /*  Render                                                         */
   /* -------------------------------------------------------------- */
 
+  // Check for missing critical data
+  const missingData: string[] = [];
+  if (!currentClient.dateOfBirth) missingData.push('date of birth');
+  if (!currentClient.annualIncome) missingData.push('annual income');
+  if (!currentClient.monthlyExpenses) missingData.push('monthly expenses');
+
   return (
     <div className="space-y-6 p-6">
       {/* Page header */}
@@ -435,6 +451,26 @@ export function Projections() {
           Adjust the sliders below to see how different retirement ages, returns, and spending levels affect the plan.
         </p>
       </div>
+
+      {missingData.length > 0 && (
+        <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 flex items-start gap-3">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-amber-500 shrink-0 mt-0.5">
+            <circle cx="9" cy="9" r="7.5" stroke="currentColor" strokeWidth="1.3" />
+            <path d="M9 6v4M9 12h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          <div>
+            <p className="text-sm font-medium text-amber-800">
+              Incomplete client data
+            </p>
+            <p className="text-sm text-amber-700 mt-0.5">
+              Missing: {missingData.join(', ')}. Projections will be more accurate once you{' '}
+              <button onClick={() => navigate(`/client/${currentClient.id}/setup/client`)} className="underline hover:no-underline font-medium">
+                complete the setup
+              </button>.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* -------------------------------------------------------- */}
       {/*  KEY METRICS CARDS                                        */}
@@ -749,11 +785,11 @@ export function Projections() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="table-header-refined text-white">
+                <tr className="bg-gray-50 border-b border-gray-200">
                   {TABLE_COLUMNS.map((col) => (
                     <th
                       key={col.key}
-                      className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap table-header-refined"
+                      className="sticky top-0 z-10 px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap bg-gray-50"
                     >
                       <span className="hidden xl:inline">{col.label}</span>
                       <span className="xl:hidden">{col.shortLabel ?? col.label}</span>

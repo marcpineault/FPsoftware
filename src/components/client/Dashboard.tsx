@@ -126,14 +126,9 @@ export function Dashboard() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-sm">
               <span className="text-white font-serif text-lg font-bold">M</span>
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-slate-800 tracking-tight">
-                {practiceSettings.firmName || 'Meridian'}
-              </h1>
-              <p className="text-xs text-slate-400">
-                {new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-              </p>
-            </div>
+            <h1 className="text-lg font-semibold text-slate-800 tracking-tight">
+              {practiceSettings.firmName || 'Meridian'}
+            </h1>
           </div>
           <div className="flex items-center gap-2.5">
             <button

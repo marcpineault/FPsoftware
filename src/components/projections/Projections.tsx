@@ -441,17 +441,7 @@ export function Projections() {
   if (!currentClient.monthlyExpenses) missingData.push('monthly expenses');
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-xl font-semibold text-slate-800">
-          Financial Projections
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Adjust the sliders below to see how different retirement ages, returns, and spending levels affect the plan.
-        </p>
-      </div>
-
+    <div className="space-y-5 p-6">
       {missingData.length > 0 && (
         <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 flex items-start gap-3">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="text-amber-500 shrink-0 mt-0.5">
@@ -492,135 +482,60 @@ export function Projections() {
         const monthlyExpenses = localContributions.monthlyExpenses;
         const retirementExpenses = Math.round(monthlyExpenses * localParams.retirementSpendingRate);
 
+        const lastMsg = metrics.moneyLastsUntilAge === null
+          ? <span className="text-positive font-medium">Savings last through age 95{metrics.surplusAtAge95 != null && metrics.surplusAtAge95 > 0 ? ` (${formatCurrency(metrics.surplusAtAge95)} surplus)` : ''}.</span>
+          : <span className="text-negative font-medium">Savings run out at age {metrics.moneyLastsUntilAge}.</span>;
+
         return (
-          <div className="rounded-xl bg-white border border-gray-200 shadow-sm p-5">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">The Bottom Line</h3>
-            {isPreRetirement ? (
-              <div className="space-y-2">
-                <p className="text-sm text-slate-700">
-                  <span className="font-semibold">To retire at age {localParams.retirementAge}</span>, you're currently saving{' '}
-                  <span className="font-semibold tabular-nums">{formatCurrency(totalAnnualSaving)}/year</span>
+          <div className="rounded-lg bg-white border border-gray-200 shadow-sm px-5 py-4">
+            <p className="text-sm text-slate-700 leading-relaxed">
+              {isPreRetirement ? (
+                <>
+                  Retire at <span className="font-semibold">{localParams.retirementAge}</span> &middot;
+                  Saving <span className="font-semibold tabular-nums">{formatCurrency(totalAnnualSaving)}/yr</span>
                   {totalAnnualSaving > 0 && currentClient.annualIncome > 0 && (
-                    <span className="text-slate-500"> ({Math.round((totalAnnualSaving / currentClient.annualIncome) * 100)}% of income)</span>
-                  )}.
-                </p>
-                <p className="text-sm text-slate-700">
-                  In retirement, you'll need roughly{' '}
-                  <span className="font-semibold tabular-nums">{formatCurrency(retirementExpenses)}/month</span>
-                  {' '}({Math.round(localParams.retirementSpendingRate * 100)}% of current spending).
+                    <span className="text-slate-400"> ({Math.round((totalAnnualSaving / currentClient.annualIncome) * 100)}%)</span>
+                  )} &middot;
+                  Need <span className="font-semibold tabular-nums">{formatCurrency(retirementExpenses)}/mo</span> in retirement
                   {retirementRow && (
-                    <span> Your projected after-tax income at retirement is{' '}
-                      <span className="font-semibold tabular-nums">{formatCurrency(Math.round(retirementRow.afterTaxIncome / 12))}/month</span>.
-                    </span>
-                  )}
-                </p>
-                {metrics.moneyLastsUntilAge === null ? (
-                  <p className="text-sm text-positive font-medium">
-                    Your savings are projected to last through age 95{metrics.surplusAtAge95 != null && metrics.surplusAtAge95 > 0 ? ` with a ${formatCurrency(metrics.surplusAtAge95)} surplus` : ''}.
-                  </p>
-                ) : (
-                  <p className="text-sm text-negative font-medium">
-                    At this rate, savings run out at age {metrics.moneyLastsUntilAge}. Consider saving more, retiring later, or reducing planned expenses.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-sm text-slate-700">
-                  <span className="font-semibold">You're in retirement.</span> Your current planned spending is{' '}
-                  <span className="font-semibold tabular-nums">{formatCurrency(monthlyExpenses)}/month</span>.
-                </p>
-                {retirementRow && (
-                  <p className="text-sm text-slate-700">
-                    After-tax income from all sources:{' '}
-                    <span className="font-semibold tabular-nums">{formatCurrency(Math.round(retirementRow.afterTaxIncome / 12))}/month</span>.
-                  </p>
-                )}
-                {metrics.moneyLastsUntilAge === null ? (
-                  <p className="text-sm text-positive font-medium">
-                    You can comfortably sustain this spending through age 95.
-                  </p>
-                ) : (
-                  <p className="text-sm text-negative font-medium">
-                    At current spending, savings are projected to run out at age {metrics.moneyLastsUntilAge}. Consider reducing withdrawals.
-                  </p>
-                )}
-              </div>
-            )}
+                    <>, have <span className="font-semibold tabular-nums">{formatCurrency(Math.round(retirementRow.afterTaxIncome / 12))}/mo</span></>
+                  )} &middot; {lastMsg}
+                </>
+              ) : (
+                <>
+                  Spending <span className="font-semibold tabular-nums">{formatCurrency(monthlyExpenses)}/mo</span>
+                  {retirementRow && (
+                    <> &middot; Income <span className="font-semibold tabular-nums">{formatCurrency(Math.round(retirementRow.afterTaxIncome / 12))}/mo</span></>
+                  )} &middot; {lastMsg}
+                </>
+              )}
+            </p>
           </div>
         );
       })()}
 
       {/* -------------------------------------------------------- */}
-      {/*  KEY METRICS CARDS                                        */}
+      {/*  KEY METRICS — compact inline row                         */}
       {/* -------------------------------------------------------- */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-children">
-        {/* Income Replacement Ratio */}
-        <div className="metric-card bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <p className="text-sm font-medium text-slate-500">
-            Income Replacement
-          </p>
-          <p
-            className={`mt-1.5 text-2xl font-semibold tabular-nums tracking-tight ${
-              replacementColor === 'positive'
-                ? 'text-positive'
-                : replacementColor === 'warning'
-                  ? 'text-warning'
-                  : 'text-negative'
-            }`}
-          >
-            {formatPercent(metrics.incomeReplacementRatio)}
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            {replacementColor === 'positive'
-              ? 'On track'
-              : replacementColor === 'warning'
-                ? 'May need adjustment'
-                : 'Below target'}
-          </p>
+      <div className="flex flex-wrap gap-x-6 gap-y-2 px-1">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-xs text-slate-400">Income Replacement</span>
+          <span className={`text-sm font-semibold tabular-nums ${
+            replacementColor === 'positive' ? 'text-positive'
+              : replacementColor === 'warning' ? 'text-warning' : 'text-negative'
+          }`}>{formatPercent(metrics.incomeReplacementRatio)}</span>
         </div>
-
-        {/* Money Lasts Until Age — primary metric */}
-        <div className={`metric-card rounded-xl border-2 shadow-sm p-5 ${
-          moneyLastsColor === 'positive'
-            ? 'bg-emerald-50/50 border-emerald-200'
-            : moneyLastsColor === 'warning'
-              ? 'bg-amber-50/50 border-amber-200'
-              : 'bg-red-50/50 border-red-200'
-        }`}>
-          <p className="text-sm font-medium text-slate-500">
-            Money Lasts Until
-          </p>
-          <p
-            className={`mt-1.5 text-3xl font-bold tabular-nums tracking-tight ${
-              moneyLastsColor === 'positive'
-                ? 'text-positive'
-                : moneyLastsColor === 'warning'
-                  ? 'text-warning'
-                  : 'text-negative'
-            }`}
-          >
-            {moneyLastsLabel}
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            {metrics.moneyLastsUntilAge === null
-              ? `${formatCurrency(metrics.surplusAtAge95 ?? 0)} surplus at 95`
-              : `Funds depleted at age ${metrics.moneyLastsUntilAge}`}
-          </p>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-xs text-slate-400">Money Lasts</span>
+          <span className={`text-sm font-semibold tabular-nums ${
+            moneyLastsColor === 'positive' ? 'text-positive'
+              : moneyLastsColor === 'warning' ? 'text-warning' : 'text-negative'
+          }`}>{moneyLastsLabel}</span>
         </div>
-
-        {/* Lifetime Tax */}
-        <div className="metric-card bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <p className="text-sm font-medium text-slate-500">
-            Lifetime Tax
-          </p>
-          <p className="mt-1.5 text-2xl font-semibold tabular-nums tracking-tight text-slate-800">
-            {formatCurrency(metrics.totalLifetimeTax)}
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            Avg {formatPercent(metrics.avgEffectiveTaxRate ?? 0)} effective rate
-          </p>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-xs text-slate-400">Lifetime Tax</span>
+          <span className="text-sm font-semibold tabular-nums text-slate-700">{formatCurrency(metrics.totalLifetimeTax)}</span>
         </div>
       </div>
 

@@ -368,10 +368,7 @@ export default function SetupWizard() {
   return (
     <div className="flex h-full bg-gray-100/80">
       {/* Step sidebar */}
-      <aside className="w-60 shrink-0 bg-white border-r border-gray-200 py-5 overflow-y-auto hidden md:flex flex-col shadow-sm">
-        <div className="px-5 mb-4">
-          <p className="text-[10px] uppercase tracking-[0.15em] text-slate-400 font-semibold">Setup Steps</p>
-        </div>
+      <aside className="w-56 shrink-0 bg-white border-r border-gray-200 py-4 overflow-y-auto hidden md:flex flex-col">
         <nav className="flex-1 space-y-0.5 px-3">
           {STEPS.map((s, i) => {
             const active = s.id === step;
@@ -415,17 +412,10 @@ export default function SetupWizard() {
           })}
         </nav>
 
-        {/* Sidebar footer */}
-        <div className="px-5 pt-4 mt-auto border-t border-gray-100">
+        <div className="px-5 pt-3 mt-auto border-t border-gray-100">
           <p className="text-[11px] text-slate-400">
-            Step {currentStepIndex + 1} of {STEPS.length}
+            {currentStepIndex + 1} / {STEPS.length}
           </p>
-          <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-amber-400 rounded-full transition-all duration-300"
-              style={{ width: `${((currentStepIndex + 1) / STEPS.length) * 100}%` }}
-            />
-          </div>
         </div>
       </aside>
 
@@ -452,22 +442,11 @@ export default function SetupWizard() {
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-2xl mx-auto px-6 py-8 space-y-5">
             {/* Step header */}
-            <div className="mb-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-slate-800">
-                  {STEPS[currentStepIndex].label}
-                </h2>
-                <SaveIndicator show={showSaved} />
-              </div>
-              <p className="text-sm text-slate-500 mt-1">
-                {step === 'client' && 'Start with the basics — name, date of birth, and province determine tax calculations.'}
-                {step === 'income' && 'Current employment income drives retirement income replacement targets.'}
-                {step === 'expenses' && 'Monthly spending determines how much income is needed in retirement.'}
-                {step === 'assets' && 'Account balances and contributions form the foundation of retirement projections.'}
-                {step === 'debts' && 'Debts affect net worth and insurance needs analysis.'}
-                {step === 'benefits' && 'Government benefits and pensions are major retirement income sources.'}
-                {step === 'insurance' && 'Coverage details feed into the insurance needs analysis.'}
-              </p>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-xl font-bold text-slate-800">
+                {STEPS[currentStepIndex].label}
+              </h2>
+              <SaveIndicator show={showSaved} />
             </div>
 
             {/* Step forms */}
@@ -518,26 +497,14 @@ export default function SetupWizard() {
             )}
 
             {step === 'expenses' && (
-              <>
-                <FormCard title="Living Expenses">
-                  <CurrencyInput
-                    label="Monthly Living Expenses"
-                    value={c.monthlyExpenses}
-                    onValueChange={(v) => handleField('monthlyExpenses', v)}
-                    hint="Total monthly spending including housing, food, utilities, transportation, etc."
-                  />
-                </FormCard>
-                <InfoBox>
-                  <p><strong>Annual expenses:</strong>{' '}
-                    <span className="tabular-nums font-semibold">
-                      {(c.monthlyExpenses * 12).toLocaleString('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 })}
-                    </span>
-                  </p>
-                  <p className="text-blue-600 mt-1 text-xs">
-                    In retirement, expenses assumed at {Math.round(c.projectionParams.retirementSpendingRate * 100)}% of pre-retirement.
-                  </p>
-                </InfoBox>
-              </>
+              <FormCard title="Living Expenses">
+                <CurrencyInput
+                  label="Monthly Living Expenses"
+                  value={c.monthlyExpenses}
+                  onValueChange={(v) => handleField('monthlyExpenses', v)}
+                  hint={c.monthlyExpenses > 0 ? `${fmtC(c.monthlyExpenses * 12)}/year` : 'Total monthly spending'}
+                />
+              </FormCard>
             )}
 
             {step === 'assets' && (
@@ -675,9 +642,6 @@ export default function SetupWizard() {
                 </FormCard>
               </>
             )}
-
-            {/* Contextual insights */}
-            <StepInsights step={step} c={c} />
 
             {/* Navigation buttons */}
             <div className="flex items-center justify-between pt-4 pb-2">

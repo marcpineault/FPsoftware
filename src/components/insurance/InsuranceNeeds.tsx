@@ -161,7 +161,7 @@ export function InsuranceNeeds() {
   const [finalExpenses, setFinalExpenses] = useState(15000);
   const [existingDisabilityMonthly, setExistingDisabilityMonthly] = useState(0);
   const [existingCriticalIllness, setExistingCriticalIllness] = useState(0);
-  const [inputsExpanded, setInputsExpanded] = useState(true);
+  const [inputsExpanded, setInputsExpanded] = useState(false);
   const [breakdownExpanded, setBreakdownExpanded] = useState(false);
 
   const c = currentClient;
@@ -363,15 +363,8 @@ export function InsuranceNeeds() {
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-slate-800">
-          Insurance Needs Analysis
+          Insurance Needs
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          {c.firstName && c.lastName
-            ? `${c.firstName} ${c.lastName}`
-            : 'Current Client'}{' '}
-          &mdash; Capital needs analysis for life, disability, and critical
-          illness coverage
-        </p>
       </div>
 
       {/* ----------------------------------------------------------------- */}
@@ -566,68 +559,6 @@ export function InsuranceNeeds() {
               </Field>
             </div>
 
-            {/* Client data summary */}
-            <div className="mt-5 pt-4 border-t border-gray-200">
-              <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">
-                Pre-populated from client profile
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                <div>
-                  <span className="text-slate-500">Annual Income:</span>{' '}
-                  <span className="font-medium text-slate-800">
-                    {formatCurrency(c.annualIncome)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Mortgage:</span>{' '}
-                  <span className="font-medium text-slate-800">
-                    {formatCurrency(c.mortgageBalance)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Other Debts:</span>{' '}
-                  <span className="font-medium text-slate-800">
-                    {formatCurrency(c.otherDebts)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Life Insurance:</span>{' '}
-                  <span className="font-medium text-slate-800">
-                    {c.hasLifeInsurance
-                      ? formatCurrency(
-                          c.lifeInsuranceDetails?.coverageAmount ?? 0
-                        )
-                      : 'None'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-500">TFSA:</span>{' '}
-                  <span className="font-medium text-slate-800">
-                    {formatCurrency(c.tfsaBalance)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Non-Reg:</span>{' '}
-                  <span className="font-medium text-slate-800">
-                    {formatCurrency(c.nonRegisteredInvestments)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Spouse:</span>{' '}
-                  <span className="font-medium text-slate-800">
-                    {c.hasSpouse ? 'Yes' : 'No'}
-                  </span>
-                </div>
-                {clientAge !== null && (
-                  <div>
-                    <span className="text-slate-500">Client Age:</span>{' '}
-                    <span className="font-medium text-slate-800">
-                      {clientAge}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         )}
       </Card>
@@ -947,12 +878,6 @@ export function InsuranceNeeds() {
         </Card>
       )}
 
-      {/* Disclaimer */}
-      <p className="text-xs text-slate-500 mt-6 text-center">
-        This analysis is for illustrative purposes only and does not constitute
-        insurance advice. Actual insurance needs may vary based on individual
-        circumstances, health status, and underwriting requirements.
-      </p>
     </div>
   );
 }

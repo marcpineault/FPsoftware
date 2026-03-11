@@ -813,7 +813,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
     const mortgageAmort = client.mortgageAmortizationYears ?? 25;
     const mortgageRemaining = calculateMortgageRemaining(client.mortgageBalance, mortgageRate, mortgageAmort, i);
     const netWorth = Math.round(rrspBalance) + Math.round(spousalRrspBalance)
-      + Math.round(tfsaBalance)
+      + Math.round(tfsaBalance) + Math.round(fhsaBalance)
       + Math.round(nonRegBalance) + Math.round(respBalance)
       + homeValue - mortgageRemaining
       - Math.max(0, client.otherDebts - (i * client.otherDebts / 10));

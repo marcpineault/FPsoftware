@@ -113,7 +113,7 @@ export default function SetupWizard() {
   const step: StepId = (rawStep as StepId) || 'client';
   const currentStepIndex = STEPS.findIndex((s) => s.id === step);
   const [showSaved, setShowSaved] = useState(false);
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const flashSaved = useCallback(() => {
     setShowSaved(true);

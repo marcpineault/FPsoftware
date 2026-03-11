@@ -455,6 +455,10 @@ export function generateProjections(client: Client): ProjectionRow[] {
   // Spousal RRSP (contributed by client, owned by spouse — taxed in spouse's hands on withdrawal)
   let spousalRrspBalance = hasSpouse ? (client.spouse!.spousalRrspBalance ?? 0) : 0;
 
+  // Spouse's own registered accounts
+  let spouseRrspBalance = hasSpouse ? (client.spouse!.rrspBalance ?? 0) : 0;
+  let spouseTfsaBalance = hasSpouse ? (client.spouse!.tfsaBalance ?? 0) : 0;
+
   for (let i = 0; i < totalYears; i++) {
     const year = currentYear + i;
     const age = currentAge + i;
@@ -516,6 +520,9 @@ export function generateProjections(client: Client): ProjectionRow[] {
       nonRegBalance = nonRegBalance * (1 + params.nonRegReturnRate);
       // Spousal RRSP grows at same rate (no additional contributions modeled separately)
       spousalRrspBalance = spousalRrspBalance * (1 + params.rrspReturnRate);
+      // Spouse's own RRSP and TFSA grow (no contributions modeled — we don't collect them)
+      spouseRrspBalance = spouseRrspBalance * (1 + params.rrspReturnRate);
+      spouseTfsaBalance = spouseTfsaBalance * (1 + params.tfsaReturnRate);
       // DC pension: grow + employer/employee contributions
       if (dcPensionBalance > 0 || dcAnnualContribution > 0) {
         dcPensionBalance = dcPensionBalance * (1 + params.rrspReturnRate) + dcAnnualContribution;
@@ -691,11 +698,37 @@ export function generateProjections(client: Client): ProjectionRow[] {
           remainingShortfall = Math.max(0, remainingShortfall - afterTaxRrsp);
         }
 
-        // (c) TFSA withdrawals last — completely tax-free
+        // (c) TFSA withdrawals — completely tax-free
         if (tfsaBalance > 0 && remainingShortfall > 0) {
           tfsaWithdrawal = Math.min(tfsaBalance, Math.round(remainingShortfall));
           tfsaBalance = Math.max(0, tfsaBalance - tfsaWithdrawal);
           remainingShortfall = Math.max(0, remainingShortfall - tfsaWithdrawal);
+        }
+
+        // (d) Spouse RRSP accounts (spousal RRSP + spouse's own RRSP) — taxable
+        if (remainingShortfall > 0) {
+          const combinedSpouseRrsp = spouseRrspBalance + spousalRrspBalance;
+          if (combinedSpouseRrsp > 0) {
+            const marginalRate = 0.30;
+            const grossNeeded = remainingShortfall / (1 - marginalRate);
+            const spouseRrspWithdraw = Math.min(Math.round(grossNeeded), combinedSpouseRrsp);
+            // Draw from spousal RRSP first, then spouse's own
+            const fromSpousal = Math.min(spouseRrspWithdraw, spousalRrspBalance);
+            const fromSpouseOwn = spouseRrspWithdraw - fromSpousal;
+            spousalRrspBalance = Math.max(0, spousalRrspBalance - fromSpousal);
+            spouseRrspBalance = Math.max(0, spouseRrspBalance - fromSpouseOwn);
+            rrspWithdrawal += spouseRrspWithdraw; // combined household RRSP withdrawal
+            const afterTaxSpouseRrsp = spouseRrspWithdraw * (1 - marginalRate);
+            remainingShortfall = Math.max(0, remainingShortfall - afterTaxSpouseRrsp);
+          }
+        }
+
+        // (e) Spouse TFSA — completely tax-free
+        if (spouseTfsaBalance > 0 && remainingShortfall > 0) {
+          const spouseTfsaWithdraw = Math.min(spouseTfsaBalance, Math.round(remainingShortfall));
+          spouseTfsaBalance = Math.max(0, spouseTfsaBalance - spouseTfsaWithdraw);
+          tfsaWithdrawal += spouseTfsaWithdraw; // combined household TFSA withdrawal
+          remainingShortfall = Math.max(0, remainingShortfall - spouseTfsaWithdraw);
         }
       }
 
@@ -704,6 +737,8 @@ export function generateProjections(client: Client): ProjectionRow[] {
       tfsaBalance = tfsaBalance * (1 + params.tfsaReturnRate);
       nonRegBalance = nonRegBalance * (1 + params.nonRegReturnRate);
       spousalRrspBalance = spousalRrspBalance * (1 + params.rrspReturnRate);
+      spouseRrspBalance = spouseRrspBalance * (1 + params.rrspReturnRate);
+      spouseTfsaBalance = spouseTfsaBalance * (1 + params.tfsaReturnRate);
     }
 
     // Round withdrawals
@@ -834,6 +869,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
     const mortgageAmort = client.mortgageAmortizationYears ?? 25;
     const mortgageRemaining = calculateMortgageRemaining(client.mortgageBalance, mortgageRate, mortgageAmort, i);
     const netWorth = Math.round(rrspBalance) + Math.round(spousalRrspBalance)
+      + Math.round(spouseRrspBalance) + Math.round(spouseTfsaBalance)
       + Math.round(tfsaBalance) + Math.round(fhsaBalance)
       + Math.round(nonRegBalance) + Math.round(respBalance)
       + homeValue - mortgageRemaining
@@ -862,8 +898,8 @@ export function generateProjections(client: Client): ProjectionRow[] {
       afterTaxIncome,
       expenses,
       netCashFlow,
-      rrspRrifBalance: Math.round(rrspBalance),
-      tfsaBalance: Math.round(tfsaBalance),
+      rrspRrifBalance: Math.round(rrspBalance) + Math.round(spousalRrspBalance) + Math.round(spouseRrspBalance),
+      tfsaBalance: Math.round(tfsaBalance) + Math.round(spouseTfsaBalance),
       fhsaBalance: Math.round(fhsaBalance),
       nonRegBalance: Math.round(nonRegBalance),
       nonRegAcb: Math.round(nonRegAcb),

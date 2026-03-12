@@ -61,7 +61,7 @@ function isStepComplete(stepId: StepId, c: Client): boolean {
     case 'expenses': return c.monthlyExpenses > 0;
     case 'assets': return (c.rrspBalance || 0) + (c.tfsaBalance || 0) + (c.nonRegisteredInvestments || 0) > 0;
     case 'debts': return true; // optional — no debt is valid
-    case 'benefits': return (c.projectionParams?.estimatedCppMonthly ?? c.estimatedCppMonthly ?? 0) > 0;
+    case 'benefits': return (c.projectionParams?.estimatedCppMonthly ?? 0) > 0;
     case 'insurance': return true; // optional — no insurance is valid
     default: return false;
   }

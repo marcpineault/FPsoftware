@@ -246,7 +246,7 @@ export function Dashboard() {
                   !!(client.monthlyExpenses > 0),                       // 3. Expenses
                   !!((client.rrspBalance || 0) + (client.tfsaBalance || 0) + (client.nonRegisteredInvestments || 0) > 0), // 4. Assets
                   true,                                                 // 5. Debts (optional)
-                  !!((client.projectionParams?.estimatedCppMonthly ?? client.estimatedCppMonthly ?? 0) > 0), // 6. Benefits
+                  !!((client.projectionParams?.estimatedCppMonthly ?? 0) > 0), // 6. Benefits
                   true,                                                 // 7. Insurance (optional)
                 ].filter(Boolean).length;
 

@@ -240,7 +240,15 @@ export function Dashboard() {
                 const age = calculateAge(client.dateOfBirth);
                 const isDeleting = deletingId === client.id;
                 const totalSavings = (client.rrspBalance || 0) + (client.tfsaBalance || 0) + (client.nonRegisteredInvestments || 0);
-                const progress = [client.discoveryComplete, client.profileComplete, client.projectionsViewed].filter(Boolean).length;
+                const progress = [
+                  !!(client.firstName && client.dateOfBirth),           // 1. Client Info
+                  !!(client.annualIncome > 0),                          // 2. Income
+                  !!(client.monthlyExpenses > 0),                       // 3. Expenses
+                  !!((client.rrspBalance || 0) + (client.tfsaBalance || 0) + (client.nonRegisteredInvestments || 0) > 0), // 4. Assets
+                  true,                                                 // 5. Debts (optional)
+                  !!((client.projectionParams?.estimatedCppMonthly ?? client.estimatedCppMonthly ?? 0) > 0), // 6. Benefits
+                  true,                                                 // 7. Insurance (optional)
+                ].filter(Boolean).length;
 
                 return (
                   <div
@@ -280,11 +288,11 @@ export function Dashboard() {
                     {/* Right side */}
                     <div className="flex items-center gap-4 shrink-0">
                       {/* Progress */}
-                      <div className="flex items-center gap-1" title={`${progress} of 3 steps complete`}>
-                        {[0, 1, 2].map((i) => (
+                      <div className="flex items-center gap-0.5" title={`${progress} of 7 steps complete`}>
+                        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
                           <div
                             key={i}
-                            className={`w-1.5 h-1.5 rounded-full transition-colors ${i < progress ? 'bg-emerald-400' : 'bg-gray-200'}`}
+                            className={`w-1 h-1 rounded-full transition-colors ${i < progress ? 'bg-emerald-400' : 'bg-gray-200'}`}
                           />
                         ))}
                       </div>

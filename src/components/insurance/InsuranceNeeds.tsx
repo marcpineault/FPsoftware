@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppStore } from '../../store';
 
 // ---------------------------------------------------------------------------
@@ -152,6 +153,8 @@ function ResultCard({
 
 export function InsuranceNeeds() {
   const { currentClient } = useAppStore();
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
   // Adjustable parameters
   const [dependentChildren, setDependentChildren] = useState(0);
@@ -876,6 +879,41 @@ export function InsuranceNeeds() {
           </div>
         </Card>
       )}
+
+      {/* Navigation */}
+      <div className="flex items-center justify-between pt-6 pb-4">
+        <button
+          onClick={() => navigate(`/client/${id}/scenarios`)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-slate-800 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path
+              d="M8.5 3L4.5 7L8.5 11"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Back: Scenarios
+        </button>
+
+        <button
+          onClick={() => navigate(`/client/${id}/report`)}
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
+        >
+          Next: Report
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path
+              d="M5.5 3L9.5 7L5.5 11"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
 
     </div>
   );

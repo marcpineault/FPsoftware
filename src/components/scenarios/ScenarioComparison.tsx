@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAppStore } from '../../store';
 import { generateProjections, calculateKeyMetrics } from '../../lib/calculations';
@@ -385,7 +385,7 @@ export function ScenarioComparison() {
   const { currentClient } = useAppStore();
 
   const defaultParams: ProjectionParams = currentClient?.projectionParams ?? {
-    retirementAge: 65,
+    retirementAge: currentClient?.targetRetirementAge ?? 65,
     cppStartAge: 65,
     oasStartAge: 65,
     estimatedCppMonthly: 1000,
@@ -402,6 +402,15 @@ export function ScenarioComparison() {
     { name: 'Base Case', params: { ...defaultParams } },
     { name: 'Scenario 2', params: { ...defaultParams } },
   ]);
+
+  // Sync scenario defaults when client data loads (initial useState may capture stale fallback)
+  const hasSynced = useRef(false);
+  useEffect(() => {
+    if (!currentClient?.projectionParams || hasSynced.current) return;
+    hasSynced.current = true;
+    const p = currentClient.projectionParams;
+    setScenarios(prev => prev.map(s => ({ ...s, params: { ...p } })));
+  }, [currentClient?.projectionParams]);
 
   // Compute results for each scenario
   const results: ScenarioResult[] = useMemo(() => {
@@ -739,10 +748,10 @@ export function ScenarioComparison() {
         </button>
 
         <button
-          onClick={() => navigate(`/client/${id}/summary`)}
+          onClick={() => navigate(`/client/${id}/insurance`)}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500"
         >
-          Next: Summary
+          Next: Insurance
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path
               d="M5.5 3L9.5 7L5.5 11"

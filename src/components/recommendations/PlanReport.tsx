@@ -130,7 +130,11 @@ function generateRetirementSection(
     if (retirementRow.oas > 0) sources.push(`OAS: ${fmt(retirementRow.oas)}`);
     if (retirementRow.pensionIncome > 0) sources.push(`Pension: ${fmt(retirementRow.pensionIncome)}`);
     if (retirementRow.rrspRrifWithdrawals > 0) sources.push(`RRSP/RRIF: ${fmt(retirementRow.rrspRrifWithdrawals)}`);
-    paragraphs.push(`First year of retirement income sources: ${sources.join(', ')}. Government benefits (CPP + OAS) represent ${pct(metrics.cppOasPercentOfRetirementIncome)} of average retirement income.`);
+    if (sources.length > 0) {
+      paragraphs.push(`First year of retirement income sources: ${sources.join(', ')}. Government benefits (CPP + OAS) represent ${pct(metrics.cppOasPercentOfRetirementIncome)} of average retirement income.`);
+    } else {
+      paragraphs.push(`In the first year of retirement, income is drawn from savings (RRSP/RRIF and TFSA withdrawals) before government benefits begin. Government benefits (CPP + OAS) represent ${pct(metrics.cppOasPercentOfRetirementIncome)} of average retirement income over the full retirement period.`);
+    }
   }
 
   return paragraphs;
@@ -441,7 +445,7 @@ export default function PlanReport() {
                     <td className="py-1.5 pr-2 tabular-nums">
                       {row.age}
                       {row.isRetired && !keyYears[i - 1]?.isRetired && (
-                        <span className="ml-1 text-[10px] text-amber-600 font-semibold">RET</span>
+                        <span className="ml-1 text-[10px] text-amber-600 font-semibold" aria-label="Retirement year"> RET</span>
                       )}
                     </td>
                     <td className="text-right py-1.5 px-2 tabular-nums">{row.employmentIncome > 0 ? fmt(row.employmentIncome) : '—'}</td>

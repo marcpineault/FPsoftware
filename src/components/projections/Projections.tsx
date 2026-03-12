@@ -237,7 +237,7 @@ export function Projections() {
   // Local params state for instant reactivity
   const [localParams, setLocalParams] = useState<ProjectionParams>(
     currentClient?.projectionParams ?? {
-      retirementAge: 65,
+      retirementAge: currentClient?.targetRetirementAge ?? 65,
       cppStartAge: 65,
       oasStartAge: 65,
       estimatedCppMonthly: 1000,
@@ -269,6 +269,18 @@ export function Projections() {
         tfsaAnnualContribution: currentClient.tfsaAnnualContribution,
         monthlyExpenses: currentClient.monthlyExpenses,
       });
+    }
+  }, [currentClient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // One-time sync: if targetRetirementAge differs from projectionParams, align them
+  useEffect(() => {
+    if (!currentClient) return;
+    const target = currentClient.targetRetirementAge;
+    const param = currentClient.projectionParams?.retirementAge;
+    if (target && param && target !== param) {
+      const synced = { ...currentClient.projectionParams, retirementAge: target };
+      updateClient({ projectionParams: synced });
+      setLocalParams(synced);
     }
   }, [currentClient?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -567,7 +579,7 @@ export function Projections() {
               Projection Parameters
             </span>
             <span className="text-xs text-slate-500 font-normal">
-              -- Adjust assumptions to explore scenarios
+              Adjust assumptions to explore scenarios
             </span>
           </div>
           <ChevronIcon expanded={paramsExpanded} />
@@ -596,11 +608,20 @@ export function Projections() {
                 onChange={(v) => handleParamChange('cppStartAge', v)}
               />
               <ParamSlider
+                label="OAS Start Age"
+                value={localParams.oasStartAge}
+                min={65}
+                max={70}
+                step={1}
+                formatValue={(v) => `${v}`}
+                onChange={(v) => handleParamChange('oasStartAge', v)}
+              />
+              <ParamSlider
                 label="Est. CPP at 65 ($/mo)"
                 value={localParams.estimatedCppMonthly}
                 min={0}
                 max={1400}
-                step={25}
+                step={5}
                 formatValue={(v) => `$${v.toLocaleString()}`}
                 onChange={(v) => handleParamChange('estimatedCppMonthly', v)}
               />
@@ -829,8 +850,10 @@ export function Projections() {
                         const isNegative = isCashFlow && val < 0;
 
                         let cellText: string;
+                        // Balance/flow columns show $0; income/tax columns show -- for zero
+                        const showZeroAsDash = col.key !== 'rrspRrifBalance' && col.key !== 'tfsaBalance' && col.key !== 'netWorth' && col.key !== 'netCashFlow';
                         if (col.format === 'currency') {
-                          cellText = val === 0 ? '--' : formatCurrencyFull(val);
+                          cellText = val === 0 && showZeroAsDash ? '--' : formatCurrencyFull(val);
                         } else if (col.format === 'percent') {
                           cellText = val != null ? `${(val * 100).toFixed(1)}%` : '--';
                         } else if (col.format === 'year') {

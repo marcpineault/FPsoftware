@@ -520,9 +520,9 @@ export function generateProjections(client: Client): ProjectionRow[] {
       nonRegBalance = nonRegBalance * (1 + params.nonRegReturnRate);
       // Spousal RRSP grows at same rate (no additional contributions modeled separately)
       spousalRrspBalance = spousalRrspBalance * (1 + params.rrspReturnRate);
-      // Spouse's own RRSP and TFSA grow (no contributions modeled — we don't collect them)
-      spouseRrspBalance = spouseRrspBalance * (1 + params.rrspReturnRate);
-      spouseTfsaBalance = spouseTfsaBalance * (1 + params.tfsaReturnRate);
+      // Spouse's own RRSP and TFSA grow with contributions
+      spouseRrspBalance = spouseRrspBalance * (1 + params.rrspReturnRate) + (client.spouse?.rrspAnnualContribution ?? 0);
+      spouseTfsaBalance = spouseTfsaBalance * (1 + params.tfsaReturnRate) + (client.spouse?.tfsaAnnualContribution ?? 0);
       // DC pension: grow + employer/employee contributions
       if (dcPensionBalance > 0 || dcAnnualContribution > 0) {
         dcPensionBalance = dcPensionBalance * (1 + params.rrspReturnRate) + dcAnnualContribution;
@@ -596,7 +596,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
       // Early RRIF conversion at 65 enables pension income splitting
       // ============================================================
       const earlyRrifAge = params.earlyRrifConversion ? 65 : RRSP_TO_RRIF_AGE;
-      const isRrif = age > earlyRrifAge;
+      const isRrif = params.earlyRrifConversion ? age >= earlyRrifAge : age > earlyRrifAge;
       if (isRrif && rrspBalance > 0) {
         rrifMinimumWithdrawal = calculateRrifMinimum(rrspBalance, age);
       }
@@ -793,7 +793,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
     let pensionSplitSavings: number | undefined;
     let incomeTax: number;
 
-    const isRrifForSplitting = age > (params.earlyRrifConversion ? 65 : RRSP_TO_RRIF_AGE);
+    const isRrifForSplitting = params.earlyRrifConversion ? age >= 65 : age > RRSP_TO_RRIF_AGE;
     const eligiblePensionIncome = pensionIncome
       + (isRetired && age >= 65 && isRrifForSplitting ? rrspWithdrawal : 0);
 

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AppLayout } from './components/layout';
 import { Dashboard } from './components/client/Dashboard';
 
@@ -46,11 +46,13 @@ function App() {
 
 // Redirect components for old routes
 function RedirectToSetup() {
-  return <Navigate to="../setup/client" replace />;
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/client/${id}/setup/client`} replace />;
 }
 
 function RedirectToReport() {
-  return <Navigate to="../report" replace />;
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/client/${id}/report`} replace />;
 }
 
 export default App;

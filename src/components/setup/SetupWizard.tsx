@@ -53,6 +53,20 @@ const INSURANCE_SOURCE_OPTIONS = [
   { value: 'both', label: 'Both' },
 ];
 
+/** Check if a setup step has meaningful data entered */
+function isStepComplete(stepId: StepId, c: Client): boolean {
+  switch (stepId) {
+    case 'client': return !!(c.firstName && c.dateOfBirth);
+    case 'income': return c.annualIncome > 0;
+    case 'expenses': return c.monthlyExpenses > 0;
+    case 'assets': return (c.rrspBalance || 0) + (c.tfsaBalance || 0) + (c.nonRegisteredInvestments || 0) > 0;
+    case 'debts': return true; // optional — no debt is valid
+    case 'benefits': return (c.projectionParams?.estimatedCppMonthly ?? c.estimatedCppMonthly ?? 0) > 0;
+    case 'insurance': return true; // optional — no insurance is valid
+    default: return false;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Layout helpers
 // ---------------------------------------------------------------------------
@@ -123,7 +137,12 @@ export default function SetupWizard() {
   const handleField = useCallback(
     (field: keyof Client, value: Client[keyof Client]) => {
       if (!currentClient) return;
-      updateClient({ [field]: value });
+      // Sync targetRetirementAge to projectionParams.retirementAge
+      if (field === 'targetRetirementAge' && typeof value === 'number' && value >= 40 && value <= 80) {
+        updateClient({ [field]: value, projectionParams: { ...currentClient.projectionParams, retirementAge: value } } as Partial<Client>);
+      } else {
+        updateClient({ [field]: value });
+      }
       flashSaved();
     },
     [currentClient, updateClient, flashSaved],
@@ -209,7 +228,7 @@ export default function SetupWizard() {
         <nav className="flex-1 space-y-0.5 px-3">
           {STEPS.map((s, i) => {
             const active = s.id === step;
-            const visited = i < currentStepIndex;
+            const visited = isStepComplete(s.id, c);
             return (
               <Link
                 key={s.id}
@@ -335,12 +354,18 @@ export default function SetupWizard() {
 
             {step === 'expenses' && (
               <FormCard title="Living Expenses">
+                <p className="text-xs text-slate-400 -mt-2 mb-4">Include housing, food, transportation, utilities, and discretionary spending. Exclude savings contributions — those are tracked under Assets.</p>
                 <CurrencyInput
                   label="Monthly Living Expenses"
                   value={c.monthlyExpenses}
                   onValueChange={(v) => handleField('monthlyExpenses', v)}
                   hint={c.monthlyExpenses > 0 ? `${fmtC(c.monthlyExpenses * 12)}/year` : 'Total monthly spending'}
                 />
+                {c.monthlyExpenses > 0 && c.annualIncome > 0 && (
+                  <p className="text-xs text-slate-400 mt-2">
+                    Spending ratio: {Math.round((c.monthlyExpenses * 12) / c.annualIncome * 100)}% of gross income
+                  </p>
+                )}
               </FormCard>
             )}
 
@@ -379,9 +404,13 @@ export default function SetupWizard() {
                   <FormCard title="Spouse Accounts">
                     <FieldRow>
                       <CurrencyInput label="Spouse RRSP Balance" value={c.spouse?.rrspBalance || 0} onValueChange={(v) => handleSpouseField('rrspBalance', v)} />
-                      <CurrencyInput label="Spousal RRSP" value={c.spouse?.spousalRrspBalance || 0} onValueChange={(v) => handleSpouseField('spousalRrspBalance', v)} hint="Contributed by client, owned by spouse" />
+                      <CurrencyInput label="Spouse RRSP Contribution" value={c.spouse?.rrspAnnualContribution || 0} onValueChange={(v) => handleSpouseField('rrspAnnualContribution', v)} hint="Annual contribution" />
                     </FieldRow>
-                    <CurrencyInput label="Spouse TFSA Balance" value={c.spouse?.tfsaBalance || 0} onValueChange={(v) => handleSpouseField('tfsaBalance', v)} />
+                    <CurrencyInput label="Spousal RRSP" value={c.spouse?.spousalRrspBalance || 0} onValueChange={(v) => handleSpouseField('spousalRrspBalance', v)} hint="Contributed by client, owned by spouse" />
+                    <FieldRow>
+                      <CurrencyInput label="Spouse TFSA Balance" value={c.spouse?.tfsaBalance || 0} onValueChange={(v) => handleSpouseField('tfsaBalance', v)} />
+                      <CurrencyInput label="Spouse TFSA Contribution" value={c.spouse?.tfsaAnnualContribution || 0} onValueChange={(v) => handleSpouseField('tfsaAnnualContribution', v)} hint="Annual contribution" />
+                    </FieldRow>
                   </FormCard>
                 )}
               </>
@@ -459,6 +488,7 @@ export default function SetupWizard() {
 
             {step === 'insurance' && (
               <>
+                <p className="text-xs text-slate-400 -mt-1 mb-3">Record existing coverage here. The Insurance Analysis tab will calculate whether additional coverage is needed.</p>
                 <FormCard title="Life Insurance">
                   <Toggle label="Has Life Insurance" checked={c.hasLifeInsurance} onChange={(v) => handleField('hasLifeInsurance', v)} />
                   {c.hasLifeInsurance && (

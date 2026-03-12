@@ -21,8 +21,10 @@ export interface SpouseInfo {
   oasStartAge: number;
   // Spouse's registered accounts
   rrspBalance: number;
+  rrspAnnualContribution?: number;
   spousalRrspBalance: number; // Spousal RRSP (contributed by client, owned by spouse)
   tfsaBalance: number;
+  tfsaAnnualContribution?: number;
 }
 
 export interface PensionDetails {

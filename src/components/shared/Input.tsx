@@ -1,4 +1,4 @@
-import { useState, useCallback, forwardRef } from 'react';
+import { useState, useCallback, forwardRef, useId } from 'react';
 import type { InputHTMLAttributes } from 'react';
 
 /* ------------------------------------------------------------------ */
@@ -34,7 +34,8 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, hint, className = '', id, ...props }, ref) => {
-    const inputId = id ?? (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
+    const autoId = useId();
+    const inputId = id ?? (label ? `${label.toLowerCase().replace(/\s+/g, '-')}-${autoId}` : undefined);
 
     return (
       <div className="w-full">

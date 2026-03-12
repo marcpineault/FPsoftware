@@ -579,6 +579,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
     let tfsaWithdrawal = 0;
     let nonRegWithdrawal = 0;
     let rrifMinimumWithdrawal = 0;
+    let spouseRrifMinimum = 0;
     let nonRegTaxableGain = 0;
 
     if (isRetired) {
@@ -601,6 +602,19 @@ export function generateProjections(client: Client): ProjectionRow[] {
         rrifMinimumWithdrawal = calculateRrifMinimum(rrspBalance, age);
       }
 
+      // Spouse RRIF minimums (spouse's own RRSP + spousal RRSP)
+      if (hasSpouse && spouseAge != null) {
+        const spouseIsRrif = params.earlyRrifConversion
+          ? spouseAge >= 65
+          : spouseAge > RRSP_TO_RRIF_AGE;
+        if (spouseIsRrif) {
+          const combinedSpouseRrsp = spouseRrspBalance + spousalRrspBalance;
+          if (combinedSpouseRrsp > 0) {
+            spouseRrifMinimum = calculateRrifMinimum(combinedSpouseRrsp, spouseAge);
+          }
+        }
+      }
+
       // ============================================================
       // STEP 2: Determine income & shortfall
       // ============================================================
@@ -617,10 +631,22 @@ export function generateProjections(client: Client): ProjectionRow[] {
       // ============================================================
       // STEP 3: Tax-optimized withdrawal strategy
       // ============================================================
-      // First, apply RRIF minimum withdrawal
+      // First, apply RRIF minimum withdrawal (client)
       if (rrifMinimumWithdrawal > 0) {
         rrspWithdrawal = rrifMinimumWithdrawal;
         rrspBalance = Math.max(0, rrspBalance - rrspWithdrawal);
+      }
+
+      // Apply spouse RRIF minimum withdrawal
+      if (spouseRrifMinimum > 0) {
+        // Withdraw proportionally from spousal RRSP and spouse's own RRSP
+        const combinedSpouseRrsp = spouseRrspBalance + spousalRrspBalance;
+        const spousalProportion = combinedSpouseRrsp > 0 ? spousalRrspBalance / combinedSpouseRrsp : 0;
+        const fromSpousal = Math.round(spouseRrifMinimum * spousalProportion);
+        const fromSpouseOwn = spouseRrifMinimum - fromSpousal;
+        spousalRrspBalance = Math.max(0, spousalRrspBalance - fromSpousal);
+        spouseRrspBalance = Math.max(0, spouseRrspBalance - fromSpouseOwn);
+        rrspWithdrawal += spouseRrifMinimum; // add to combined household RRSP withdrawal
       }
 
       // After-tax estimate of guaranteed income + RRIF minimum
@@ -629,8 +655,8 @@ export function generateProjections(client: Client): ProjectionRow[] {
         baseTaxableIncome,
         client.province,
       );
-      // Also compute spouse's tax on their guaranteed income
-      const spouseGuaranteedTaxable = spouseEmploymentIncome + spouseCpp + spouseOasGross;
+      // Also compute spouse's tax on their guaranteed income (includes spouse RRIF)
+      const spouseGuaranteedTaxable = spouseEmploymentIncome + spouseCpp + spouseOasGross + spouseRrifMinimum;
       const spouseTaxOnBase = spouseGuaranteedTaxable > 0
         ? estimateIncomeTax(spouseGuaranteedTaxable, client.province) : 0;
       const afterTaxBase = incomeBeforeDiscretionary - taxOnBaseIncome - spouseTaxOnBase;
@@ -777,6 +803,12 @@ export function generateProjections(client: Client): ProjectionRow[] {
     const oasClawback = oasGross > 0 ? calculateOasClawback(taxableIncome, oasGross) : 0;
     const oasNet = oasGross - oasClawback;
 
+    // Spouse OAS clawback
+    const spouseTaxableForClawback = spouseEmploymentIncome + spouseCpp + spouseOasGross + spouseRrifMinimum;
+    const spouseOasClawback = hasSpouse && spouseOasGross > 0
+      ? calculateOasClawback(spouseTaxableForClawback, spouseOasGross) : 0;
+    const spouseOasNet = spouseOasGross - spouseOasClawback;
+
     // GIS — for low-income retirees aged 65+
     // Net income for GIS excludes OAS but includes CPP, pension, RRSP withdrawals
     const incomeForGis = taxableIncome - oasGross; // GIS uses income excluding OAS
@@ -836,7 +868,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
     // --- Spouse's income tax (spouse is taxed separately) ---
     let spouseTax = 0;
     if (hasSpouse) {
-      const spouseTaxableIncome = spouseEmploymentIncome + spouseCpp + spouseOasGross;
+      const spouseTaxableIncome = spouseEmploymentIncome + spouseCpp + spouseOasGross + spouseRrifMinimum;
       if (spouseTaxableIncome > 0) {
         spouseTax = estimateIncomeTax(spouseTaxableIncome, client.province);
       }
@@ -847,19 +879,22 @@ export function generateProjections(client: Client): ProjectionRow[] {
 
     // Total cash received (OAS is reduced by clawback, GIS is tax-free)
     const totalIncome = employmentIncome + cpp + oasNet + gisAmount + pensionIncome
-      + spouseEmploymentIncome + spouseCpp + spouseOasGross
+      + spouseEmploymentIncome + spouseCpp + spouseOasNet
       + rrspWithdrawal + tfsaWithdrawal + nonRegWithdrawal;
 
     const afterTaxIncome = totalIncome - householdTax;
 
-    // Pre-retirement: subtract savings contributions from cash flow
+    // Pre-retirement: subtract savings contributions from cash flow (client + spouse)
+    const spouseContributions = hasSpouse
+      ? (client.spouse?.rrspAnnualContribution ?? 0) + (client.spouse?.tfsaAnnualContribution ?? 0)
+      : 0;
     const annualContributions = !isRetired
-      ? (client.rrspAnnualContribution + client.tfsaAnnualContribution + (client.fhsaAnnualContribution || 0))
+      ? (client.rrspAnnualContribution + client.tfsaAnnualContribution + (client.fhsaAnnualContribution || 0) + spouseContributions)
       : 0;
     const netCashFlow = afterTaxIncome - expenses - annualContributions;
 
-    // Effective tax rate
-    const effectiveTaxRate = totalIncome > 0 ? (householdTax + oasClawback) / totalIncome : 0;
+    // Effective tax rate (includes both client and spouse OAS clawback)
+    const effectiveTaxRate = totalIncome > 0 ? (householdTax + oasClawback + spouseOasClawback) / totalIncome : 0;
 
     // Net worth: balances + home - debts
     const homeValue = Math.round(
@@ -885,7 +920,7 @@ export function generateProjections(client: Client): ProjectionRow[] {
       oas: oasNet,
       oasClawback: oasClawback > 0 ? oasClawback : undefined,
       spouseCpp: hasSpouse && spouseCpp > 0 ? spouseCpp : undefined,
-      spouseOas: hasSpouse && spouseOasGross > 0 ? spouseOasGross : undefined,
+      spouseOas: hasSpouse && spouseOasNet > 0 ? spouseOasNet : undefined,
       gis: gisAmount > 0 ? gisAmount : undefined,
       pensionIncome,
       rrspRrifWithdrawals: rrspWithdrawal,
@@ -972,7 +1007,7 @@ export function calculateKeyMetrics(
   const retirementRows = rows.filter((r) => r.isRetired && r.totalIncome > 0);
   const avgCppOas =
     retirementRows.length > 0
-      ? retirementRows.reduce((sum, r) => sum + r.cpp + r.oas, 0) / retirementRows.length
+      ? retirementRows.reduce((sum, r) => sum + r.cpp + r.oas + (r.spouseCpp ?? 0) + (r.spouseOas ?? 0), 0) / retirementRows.length
       : 0;
   const avgRetirementIncome =
     retirementRows.length > 0

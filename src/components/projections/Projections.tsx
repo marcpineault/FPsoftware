@@ -231,7 +231,7 @@ export function Projections() {
   const navigate = useNavigate();
   const { currentClient, updateClient } = useAppStore();
 
-  const [view, setView] = useState<'table' | 'chart' | 'balances' | 'income'>('table');
+  const [view, setView] = useState<'table' | 'chart' | 'balances' | 'income' | 'strategy'>('table');
   const [paramsExpanded, setParamsExpanded] = useState(false);
 
   // Local params state for instant reactivity
@@ -797,6 +797,23 @@ export function Projections() {
               Income
             </span>
           </button>
+          <button
+            onClick={() => setView('strategy')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              view === 'strategy'
+                ? 'bg-navy text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <span className="flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 1V13M1 7H13" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M3 4L7 1L11 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 10L7 13L11 10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Strategy
+            </span>
+          </button>
         </div>
 
         <p className="text-xs text-slate-500 shrink-0">
@@ -1212,6 +1229,362 @@ export function Projections() {
           )}
         </div>
       )}
+
+      {/* -------------------------------------------------------- */}
+      {/*  STRATEGY VIEW                                            */}
+      {/* -------------------------------------------------------- */}
+
+      {view === 'strategy' && currentClient && (() => {
+        const c = currentClient;
+        const retAge = localParams.retirementAge;
+        const now = new Date();
+        const dob = new Date(c.dateOfBirth);
+        const currentAge = now.getFullYear() - dob.getFullYear();
+        const yearsToRetirement = Math.max(0, retAge - currentAge);
+        const isCurrentlyRetired = yearsToRetirement === 0;
+
+        // Contribution limits
+        const rrspLimit = Math.min(c.annualIncome * 0.18, 32490);
+        const rrspRoom = c.rrspDeductionRoom || 0;
+        const rrspContrib = localContributions.rrspAnnualContribution;
+        const tfsaContrib = localContributions.tfsaAnnualContribution;
+        const tfsaRoom = c.tfsaContributionRoom || 0;
+        const fhsaContrib = c.fhsaAnnualContribution || 0;
+        const fhsaBalance = c.fhsaBalance || 0;
+        const fhsaLifetimeRemaining = Math.max(0, 40000 - fhsaBalance);
+        const respContrib = c.respAnnualContribution || 0;
+        const cespMaxPerChild = 500; // $2,500 contribution = $500 CESG match per child
+        const numChildren = c.children?.length ?? 0;
+
+        // Spouse contributions
+        const hasSpouse = c.hasSpouse && c.spouse;
+        const spouseRrspContrib = hasSpouse ? (c.spouse!.rrspAnnualContribution ?? 0) : 0;
+        const spouseTfsaContrib = hasSpouse ? (c.spouse!.tfsaAnnualContribution ?? 0) : 0;
+        const spouseIncome = hasSpouse ? c.spouse!.annualIncome : 0;
+        const spouseRrspLimit = hasSpouse ? Math.min(spouseIncome * 0.18, 32490) : 0;
+
+        // First retirement year data
+        const firstRetYear = projections.find(r => r.isRetired);
+
+        // Total annual savings
+        const totalSavings = rrspContrib + tfsaContrib + fhsaContrib + respContrib + spouseRrspContrib + spouseTfsaContrib;
+
+        // Helper for bar widths
+        const pctBar = (amount: number, limit: number) => limit > 0 ? Math.min(100, (amount / limit) * 100) : 0;
+
+        return (
+          <div className="space-y-6">
+
+            {/* ---- ACCUMULATION: WHERE MONEY GOES IN ---- */}
+            {!isCurrentlyRetired && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 3V13M5 6L8 3L11 6" stroke="#059669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-800">Where Your Money Goes</h3>
+                    <p className="text-xs text-slate-500">{yearsToRetirement} years of saving until retirement at age {retAge}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {/* RRSP */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-700">RRSP</span>
+                      <span className="text-sm tabular-nums text-slate-600">
+                        {formatCurrencyFull(rrspContrib)}/yr
+                        <span className="text-slate-400 ml-1">of {formatCurrencyFull(rrspLimit)} limit</span>
+                      </span>
+                    </div>
+                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500 rounded-full transition-all"
+                        style={{ width: `${pctBar(rrspContrib, rrspLimit)}%` }}
+                      />
+                    </div>
+                    {rrspRoom > 0 && (
+                      <p className="text-xs text-blue-600">
+                        {formatCurrencyFull(rrspRoom)} unused room available (from NOA)
+                      </p>
+                    )}
+                  </div>
+
+                  {/* TFSA */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-700">TFSA</span>
+                      <span className="text-sm tabular-nums text-slate-600">
+                        {formatCurrencyFull(tfsaContrib)}/yr
+                        <span className="text-slate-400 ml-1">of $7,000 annual limit</span>
+                      </span>
+                    </div>
+                    <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-teal-500 rounded-full transition-all"
+                        style={{ width: `${pctBar(tfsaContrib, 7000)}%` }}
+                      />
+                    </div>
+                    {tfsaRoom > 0 && (
+                      <p className="text-xs text-teal-600">
+                        {formatCurrencyFull(tfsaRoom)} contribution room available
+                      </p>
+                    )}
+                  </div>
+
+                  {/* FHSA (if applicable) */}
+                  {(fhsaBalance > 0 || fhsaContrib > 0) && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-700">FHSA</span>
+                        <span className="text-sm tabular-nums text-slate-600">
+                          {formatCurrencyFull(fhsaContrib)}/yr
+                          <span className="text-slate-400 ml-1">of $8,000 annual limit</span>
+                        </span>
+                      </div>
+                      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-violet-500 rounded-full transition-all"
+                          style={{ width: `${pctBar(fhsaContrib, 8000)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-violet-600">
+                        {formatCurrencyFull(fhsaLifetimeRemaining)} of $40,000 lifetime limit remaining
+                      </p>
+                    </div>
+                  )}
+
+                  {/* RESP */}
+                  {numChildren > 0 && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-700">RESP</span>
+                        <span className="text-sm tabular-nums text-slate-600">
+                          {formatCurrencyFull(respContrib)}/yr
+                          <span className="text-slate-400 ml-1">
+                            ({numChildren} {numChildren === 1 ? 'child' : 'children'})
+                          </span>
+                        </span>
+                      </div>
+                      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-amber-500 rounded-full transition-all"
+                          style={{ width: `${pctBar(respContrib, numChildren * 2500)}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-amber-600">
+                        CESG match: 20% on first $2,500/child = up to {formatCurrencyFull(numChildren * cespMaxPerChild)}/yr free
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Spouse accounts */}
+                  {hasSpouse && (spouseRrspContrib > 0 || spouseTfsaContrib > 0) && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                        {c.spouse!.firstName}'s Contributions
+                      </p>
+
+                      {spouseRrspContrib > 0 && (
+                        <div className="space-y-1.5 mb-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-slate-700">Spouse RRSP</span>
+                            <span className="text-sm tabular-nums text-slate-600">
+                              {formatCurrencyFull(spouseRrspContrib)}/yr
+                              <span className="text-slate-400 ml-1">of {formatCurrencyFull(spouseRrspLimit)} limit</span>
+                            </span>
+                          </div>
+                          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-blue-400 rounded-full transition-all"
+                              style={{ width: `${pctBar(spouseRrspContrib, spouseRrspLimit)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {spouseTfsaContrib > 0 && (
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-slate-700">Spouse TFSA</span>
+                            <span className="text-sm tabular-nums text-slate-600">
+                              {formatCurrencyFull(spouseTfsaContrib)}/yr
+                              <span className="text-slate-400 ml-1">of $7,000 annual limit</span>
+                            </span>
+                          </div>
+                          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-teal-400 rounded-full transition-all"
+                              style={{ width: `${pctBar(spouseTfsaContrib, 7000)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Total savings summary */}
+                  <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
+                    <span className="text-sm font-semibold text-slate-800">Total Annual Savings</span>
+                    <span className="text-sm font-bold text-emerald-700 tabular-nums">
+                      {formatCurrencyFull(totalSavings)}/yr
+                    </span>
+                  </div>
+
+                  {/* Non-registered overflow note */}
+                  {c.nonRegisteredInvestments > 0 && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      Non-registered investments ({formatCurrencyFull(c.nonRegisteredInvestments)} balance) — no contribution limits, but gains are taxable
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ---- DECUMULATION: WHERE MONEY COMES FROM ---- */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 13V3M5 10L8 13L11 10" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-slate-800">Where Your Income Comes From</h3>
+                  <p className="text-xs text-slate-500">Retirement withdrawal strategy starting at age {retAge}</p>
+                </div>
+              </div>
+
+              {/* Withdrawal order */}
+              <div className="mb-5">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Tax-Optimized Withdrawal Order</p>
+                <div className="space-y-2">
+                  {[
+                    { step: '1', label: 'Government Benefits', desc: 'CPP + OAS (+ GIS if eligible) — guaranteed, indexed to inflation', color: 'bg-emerald-500' },
+                    { step: '2', label: 'Pension Income', desc: c.pensionType === 'db' ? 'Defined benefit pension — guaranteed monthly income' : c.pensionType === 'dc' ? 'DC pension rolls into RRSP at retirement' : 'No employer pension', color: 'bg-purple-500', hide: c.pensionType === 'none' },
+                    { step: '3', label: 'Non-Registered', desc: 'Withdraw first — only capital gains portion is taxed (50% inclusion)', color: 'bg-orange-500' },
+                    { step: '4', label: 'RRSP / RRIF', desc: 'RRIF minimums are mandatory after age 71. Target withdrawals to stay in lower tax brackets', color: 'bg-blue-500' },
+                    { step: '5', label: 'TFSA', desc: 'Withdraw last — completely tax-free. Preserves tax-free compounding longest', color: 'bg-teal-500' },
+                  ].filter(s => !s.hide).map((step) => (
+                    <div key={step.step} className="flex items-start gap-3">
+                      <div className={`w-6 h-6 rounded-full ${step.color} text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5`}>
+                        {step.step}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-800">{step.label}</p>
+                        <p className="text-xs text-slate-500">{step.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* First retirement year breakdown */}
+              {firstRetYear && (
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                    Age {firstRetYear.age} — First Year of Retirement
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      { label: 'CPP', amount: firstRetYear.cpp, color: 'bg-emerald-500' },
+                      { label: 'OAS', amount: firstRetYear.oas, color: 'bg-emerald-400' },
+                      ...(firstRetYear.gis && firstRetYear.gis > 0 ? [{ label: 'GIS', amount: firstRetYear.gis, color: 'bg-emerald-300' }] : []),
+                      ...(firstRetYear.spouseCpp || firstRetYear.spouseOas ? [{ label: 'Spouse CPP/OAS', amount: (firstRetYear.spouseCpp ?? 0) + (firstRetYear.spouseOas ?? 0), color: 'bg-emerald-200' }] : []),
+                      ...(firstRetYear.pensionIncome > 0 ? [{ label: 'Pension', amount: firstRetYear.pensionIncome, color: 'bg-purple-500' }] : []),
+                      ...(firstRetYear.nonRegWithdrawals > 0 ? [{ label: 'Non-Registered', amount: firstRetYear.nonRegWithdrawals, color: 'bg-orange-500' }] : []),
+                      ...(firstRetYear.rrspRrifWithdrawals > 0 ? [{ label: 'RRSP/RRIF', amount: firstRetYear.rrspRrifWithdrawals, color: 'bg-blue-500' }] : []),
+                      ...(firstRetYear.tfsaWithdrawals > 0 ? [{ label: 'TFSA', amount: firstRetYear.tfsaWithdrawals, color: 'bg-teal-500' }] : []),
+                    ].filter(s => s.amount > 0).map((source) => {
+                      const total = firstRetYear.totalIncome;
+                      const pct = total > 0 ? (source.amount / total) * 100 : 0;
+                      return (
+                        <div key={source.label} className="flex items-center gap-3">
+                          <div className="w-24 text-xs text-slate-600 text-right shrink-0">{source.label}</div>
+                          <div className="flex-1 h-5 bg-gray-100 rounded overflow-hidden relative">
+                            <div
+                              className={`h-full ${source.color} rounded transition-all`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <div className="w-20 text-xs tabular-nums text-slate-700 text-right shrink-0">
+                            {formatCurrencyFull(source.amount)}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Tax and net */}
+                    <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
+                      <div className="w-24 text-xs text-red-600 text-right shrink-0 font-medium">Income Tax</div>
+                      <div className="flex-1" />
+                      <div className="w-20 text-xs tabular-nums text-red-600 text-right shrink-0">
+                        −{formatCurrencyFull(firstRetYear.incomeTax)}
+                      </div>
+                    </div>
+                    {(firstRetYear.oasClawback ?? 0) > 0 && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-24 text-xs text-red-500 text-right shrink-0">OAS Clawback</div>
+                        <div className="flex-1" />
+                        <div className="w-20 text-xs tabular-nums text-red-500 text-right shrink-0">
+                          −{formatCurrencyFull(firstRetYear.oasClawback!)}
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-3 pt-1 border-t border-gray-200">
+                      <div className="w-24 text-xs text-slate-800 text-right shrink-0 font-semibold">After-Tax</div>
+                      <div className="flex-1" />
+                      <div className="w-20 text-sm tabular-nums text-slate-800 text-right shrink-0 font-bold">
+                        {formatCurrencyFull(firstRetYear.afterTaxIncome)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Key rules / limits */}
+              <div className="mt-5 pt-4 border-t border-gray-100">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Key Rules & Limits</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
+                  <div className="flex items-start gap-2">
+                    <span className="text-slate-400 mt-0.5">•</span>
+                    <span>RRSP must convert to RRIF by Dec 31 of the year you turn 71</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-slate-400 mt-0.5">•</span>
+                    <span>RRIF minimum withdrawals increase each year (4% at 65 → 20% at 95)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-slate-400 mt-0.5">•</span>
+                    <span>CPP can start age 60–70 (reduced 0.6%/mo early, +0.7%/mo late)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-slate-400 mt-0.5">•</span>
+                    <span>OAS clawback begins at {formatCurrencyFull(90997)} net income (15% recovery)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-slate-400 mt-0.5">•</span>
+                    <span>TFSA withdrawals don't count as income — no tax, no clawback</span>
+                  </div>
+                  {localParams.enablePensionSplitting && (
+                    <div className="flex items-start gap-2">
+                      <span className="text-slate-400 mt-0.5">•</span>
+                      <span>Pension income splitting: up to 50% of eligible pension to spouse</span>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-2">
+                    <span className="text-slate-400 mt-0.5">•</span>
+                    <span>Capital gains: 50% inclusion up to $250K, 66.67% above</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
